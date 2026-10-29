@@ -1,7 +1,7 @@
 {
   "implementation_started_at": "2026-10-29T06:28:59.042622+00:00",
   "timezone": "Asia/Shanghai",
-  "timing_scope": "Implementation from initial project code/config creation. Earlier document reading and model discovery not measured. Formal 180-minute exam clock and scope not confirmed.",
+  "timing_scope": "Measured implementation from initial code/config creation; earlier document reading and model discovery were not timed. User budget is 120 minutes; formal exam start remains unconfirmed.",
   "formal_exam_180min_verified": false,
   "user_demo_authorization": "User explicitly allowed self-made 10 second demo material.",
   "model": "gpt-6-sol",
@@ -18,5 +18,6 @@
   "provider_migration_at": "2026-10-29T07:05:30.057116+00:00",
   "stage_b_v1_commit": "f97521b",
   "stage_c_v2_commit": "dbd4be0",
-  "provider_migration_completed_at": "2026-10-29T07:13:30.955603+00:00"
+  "provider_migration_completed_at": "2026-10-29T07:13:30.955603+00:00",
+  "migration_commit": "a037f43e537e2c7f719523c3c02d604f775df82f"
 }

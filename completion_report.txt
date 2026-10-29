@@ -1,0 +1,34 @@
+Coding Agent 与视频 Agent 交付说明
+
+架构
+Python CLI，共享 Responses 模型循环、文件/进程与视频工具，
+Pydantic 校验，FFmpeg/ffprobe 渲染验证，JSON/JSONL 与 Git 留证。
+当前模型 deepseek-flash/high，官方 https://api.deepseek.com，
+只用 DEEPSEEK_API_KEY；禁用 OPENAI_API_KEY 和凭据回退。
+
+完成情况
+Coding Agent 已保留真实失败、工具改码及独立验收成功记录。
+阶段 A 提交 289150c；视频源码生成与 v1 提交 f97521b；
+v2 提交 dbd4be0；DeepSeek 接入代码提交 a037f43。
+历史两版均为 10 秒、1280×720/30fps、H.264/AAC，
+已验证中文标题、500ms 溶解、音乐、顺序修改及完整解码。
+两版路径 runs/demo/output_v1.mp4 和 output_v2.mp4；
+需求、时间线、差异及验证同目录，媒体哈希见 manifest.json。
+DeepSeek 已真实完成图片/工具调用与业务源码修改、独立验收；
+新记录 runs/deepseek_migration，预检 reports/env_check_deepseek.json。
+
+已知限制
+两版视频是迁移前 OpenAI 历史结果，未重标为 DeepSeek 输出；
+本次切换后没有重剪视频。ASR 未配置，需对白字幕时明确失败。
+仅基础效果、正常速度及 v1→v2；抽帧不能保证未观察每帧语义。
+正式评分及 U01–U06 未完全确认，不能声称全部考核通过。
+
+耗时与费用
+已记录的代码实施耗时约 46.93 分钟，用户预算为 120 分钟。
+前期文档读取与模型发现未计时，正式考核完整起点未确认。
+当前迁移的 Coding Agent 实际 45 次调用，另有 DeepSeek 预检；
+历史与当前模型分开计量，详见 reports/project_usage.json。
+费用未知（不是零）：未核对账单/计价时段，部分失败用量未知；
+Codex 主对话与协作助手用量未包含在项目 API 统计内。
+
+启动、依赖与配置见 README.md、requirements.txt、config.example.json。
