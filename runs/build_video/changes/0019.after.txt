@@ -1,0 +1,105 @@
+"""Compile validated data to a restricted FFmpeg graph; never accept arbitrary filters."""
+import json
+import html
+import subprocess
+import time
+from pathlib import Path
+
+
+def stamp(ms):
+    h, r = divmod(ms, 3600000)
+    m, r = divmod(r, 60000)
+    s, r = divmod(r, 1000)
+    return f'{h:02}:{m:02}:{s:02},{r:03}'
+
+
+def execute(argv, run_dir, label, timeout):
+    folder = Path(run_dir) / 'commands'
+    folder.mkdir(exist_ok=True)
+    ident = f'{time.time_ns()}_{label}'
+    (folder / f'{ident}.argv.json').write_text(json.dumps(argv, ensure_ascii=False, indent=2), encoding='utf-8')
+    try:
+        p = subprocess.run(argv, cwd=run_dir, capture_output=True, text=True, timeout=timeout)
+        (folder / f'{ident}.stdout.log').write_text(p.stdout, encoding='utf-8')
+        (folder / f'{ident}.stderr.log').write_text(p.stderr, encoding='utf-8')
+        (folder / f'{ident}.result.json').write_text(json.dumps({'exit_code': p.returncode}), encoding='utf-8')
+        if p.returncode:
+            raise RuntimeError(f'{label} exit {p.returncode}: {p.stderr[-5000:]} (commands/{ident}.stderr.log)')
+        return p.stdout
+    except subprocess.TimeoutExpired as e:
+        (folder / f'{ident}.timeout.log').write_text(str(e), encoding='utf-8')
+        raise
+
+
+def render(t, report, inventory, config, run_dir):
+    root = Path(inventory['asset_root'])
+    assets = {a['asset_id']: a for a in inventory['assets']}
+    run_dir = Path(run_dir).resolve()
+    length = report['computed_duration_ms']
+    srt = run_dir / f'captions_v{t.version}.srt'
+    srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{c.text.replace(chr(13), " ").replace(chr(10), " ")}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
+    argv = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-filter_complex_threads', '1', '-y']
+    input_indices = []
+    n = 0
+    for c in t.clips:
+        a = assets[c.asset_id]
+        seconds = (c.out_ms - c.in_ms if c.kind == 'video' else c.duration_ms) / 1000
+        if c.kind == 'image':
+            argv += ['-loop', '1', '-framerate', str(t.output.fps), '-t', str(seconds), '-i', str(root / a['relative_path'])]
+        else:
+            argv += ['-i', str(root / a['relative_path'])]
+        video_idx = n
+        n += 1
+        if not a['has_audio'] or c.kind == 'image':
+            argv += ['-f', 'lavfi', '-t', str(seconds), '-i', 'anullsrc=r=48000:cl=stereo']
+            audio_idx = n
+            n += 1
+        else:
+            audio_idx = video_idx
+        input_indices.append((video_idx, audio_idx))
+    bgm_idx = None
+    if t.bgm:
+        a = assets[t.bgm.asset_id]
+        bgm_idx = n
+        if t.bgm.loop:
+            argv += ['-stream_loop', '-1']
+        argv += ['-i', str(root / a['relative_path'])]
+    graph = []
+    w, h, fps = t.output.width, t.output.height, t.output.fps
+    for i, (c, (vi, ai)) in enumerate(zip(t.clips, input_indices)):
+        dur = (c.out_ms - c.in_ms if c.kind == 'video' else c.duration_ms) / 1000
+        segment = f'trim=start={c.in_ms / 1000}:duration={dur}' if c.kind == 'video' else f'trim=duration={dur}'
+        size = f'scale=w={w}:h={h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2' if c.fit == 'pad' else f'scale=w={w}:h={h}:force_original_aspect_ratio=increase,crop={w}:{h}'
+        vf = f'[{vi}:v]{segment},setpts=PTS-STARTPTS,{size},setsar=1,fps={fps},format=yuv420p,settb=AVTB'
+        if c.transition_out.type == 'fade':
+            vf += f',fade=t=out:st={dur-c.transition_out.duration_ms/1000}:d={c.transition_out.duration_ms/1000}'
+        graph.append(vf + f'[v{i}]')
+        trim = f'atrim=start={c.in_ms/1000}:duration={dur}' if c.kind == 'video' and ai == vi else f'atrim=duration={dur}'
+        af = f'[{ai}:a]{trim},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={"0" if c.mute else str(c.gain_db) + "dB"}'
+        if c.transition_out.type == 'fade':
+            af += f',afade=t=out:st={dur-c.transition_out.duration_ms/1000}:d={c.transition_out.duration_ms/1000}'
+        graph.append(af + f'[a{i}]')
+    vv, aa = 'v0', 'a0'
+    for i in range(1, len(t.clips)):
+        tr = t.clips[i-1].transition_out
+        nextv, nexta = f'vc{i}', f'ac{i}'
+        if tr.type == 'dissolve':
+            offset = (report['clip_positions'][i]['start_ms']) / 1000
+            graph.append(f'[{vv}][v{i}]xfade=transition=fade:duration={tr.duration_ms/1000}:offset={offset}[{nextv}]')
+            graph.append(f'[{aa}][a{i}]acrossfade=d={tr.duration_ms/1000}:c1=tri:c2=tri[{nexta}]')
+        else:
+            graph.append(f'[{vv}][v{i}]concat=n=2:v=1:a=0[{nextv}]')
+            graph.append(f'[{aa}][a{i}]concat=n=2:v=0:a=1[{nexta}]')
+        vv, aa = nextv, nexta
+    if t.bgm:
+        bgm = t.bgm
+        remaining = (length - bgm.start_ms) / 1000
+        graph.append(f'[{bgm_idx}:a]atrim=start={bgm.in_ms/1000}:duration={remaining},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={bgm.gain_db}dB,afade=t=in:st=0:d={bgm.fade_in_ms/1000},afade=t=out:st={(length-bgm.start_ms-bgm.fade_out_ms)/1000}:d={bgm.fade_out_ms/1000},adelay={bgm.start_ms}|{bgm.start_ms}[music]')
+        graph.append(f'[{aa}][music]amix=inputs=2:duration=first:normalize=0,atrim=duration={length/1000}[mixed]')
+        aa = 'mixed'
+    # cwd relative SRT avoids Windows drive-letter colon escaping in filter expressions.
+    graph.append(f"[{vv}]subtitles=filename='{srt.name}':force_style='FontName=Microsoft YaHei,FontSize=40,Alignment=2,MarginV=52'[finalv]")
+    pending = run_dir / f'output_v{t.version}.pending.mp4'
+    argv += ['-filter_complex', ';'.join(graph), '-map', '[finalv]', '-map', f'[{aa}]', '-t', str(length/1000), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-r', str(fps), '-c:a', 'aac', '-ar', '48000', '-ac', '2', '-b:a', '128k', '-movflags', '+faststart', str(pending)]
+    execute(argv, run_dir, f'render_v{t.version}', config.command_timeout_s)
+    return str(pending)

@@ -1,0 +1,18 @@
+[
+  "ffmpeg",
+  "-hide_banner",
+  "-loglevel",
+  "error",
+  "-y",
+  "-f",
+  "lavfi",
+  "-i",
+  "color=c=blue:s=320x180:r=30:d=0.5",
+  "-frames:v",
+  "15",
+  "-c:v",
+  "libx264",
+  "-pix_fmt",
+  "yuv420p",
+  "D:\\Tmp\\runs\\demo\\fault_recovered.mp4"
+]

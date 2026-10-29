@@ -1,0 +1,16 @@
+[
+  "ffmpeg",
+  "-hide_banner",
+  "-loglevel",
+  "error",
+  "-y",
+  "-ss",
+  "9.900",
+  "-i",
+  "D:\\Tmp\\runs\\demo\\output_v2.pending.mp4",
+  "-frames:v",
+  "1",
+  "-q:v",
+  "3",
+  "D:\\Tmp\\runs\\demo\\verification_frames\\v2_9900.jpg"
+]

@@ -1,5 +1,6 @@
 """Compile validated data to a restricted FFmpeg graph; never accept arbitrary filters."""
 import json
+import html
 import subprocess
 import time
 from pathlib import Path
@@ -36,7 +37,7 @@ def render(t, report, inventory, config, run_dir):
     run_dir = Path(run_dir).resolve()
     length = report['computed_duration_ms']
     srt = run_dir / f'captions_v{t.version}.srt'
-    srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{c.text.replace(chr(13), " ").replace(chr(10), " ")}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
+    srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text.replace(chr(13), " ").replace(chr(10), " ").replace('-->', '→'), quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
     argv = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-filter_complex_threads', '1', '-y']
     input_indices = []
     n = 0

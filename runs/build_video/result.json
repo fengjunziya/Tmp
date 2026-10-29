@@ -1,0 +1,35 @@
+{
+  "status": "completed",
+  "ok": true,
+  "turns": 37,
+  "finish": {
+    "ok": true,
+    "accepted": true,
+    "summary": "已通过真实 create、revise 与独立验收（VIDEO_DEMO_ACCEPTED）。交付源码 video_agent.py、media.py、timeline.py、renderer.py、verify.py；证据 runs/demo/{assets.json,analysis.json,requirements_v1.json,requirements_v2.json,timeline_v1.json,timeline_v2.json,output_v1.mp4,output_v2.mp4,validation_v1.json,validation_v2.json,revision_diff.json,manifest.json,events.jsonl,usage.json,commands/}。显式编码器故障与真实修复证据在 runs/demo/commands/*fault*。未提供真实带时间戳 ASR 服务，正式对白自动字幕请求会明确失败；采样视觉验证不保证未采样帧。未提交 Git。",
+    "checks": [
+      {
+        "ok": true,
+        "argv": [
+          "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+          "scripts/accept_video.py"
+        ],
+        "cwd": "D:\\Tmp",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 0.186,
+        "stdout": "VIDEO_DEMO_ACCEPTED: two independently checked 10s revisions\r\n",
+        "stderr": "",
+        "stdout_path": "D:\\Tmp\\runs\\build_video\\commands\\0010.stdout.log",
+        "stderr_path": "D:\\Tmp\\runs\\build_video\\commands\\0010.stderr.log"
+      }
+    ],
+    "changed_files": [
+      "README.md",
+      "media.py",
+      "renderer.py",
+      "timeline.py",
+      "verify.py",
+      "video_agent.py"
+    ]
+  }
+}

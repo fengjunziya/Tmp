@@ -1,0 +1,16 @@
+[
+  "ffmpeg",
+  "-hide_banner",
+  "-loglevel",
+  "error",
+  "-y",
+  "-f",
+  "lavfi",
+  "-i",
+  "color=c=blue:s=320x180:r=30:d=0.5",
+  "-frames:v",
+  "15",
+  "-c:v",
+  "deliberately_invalid_encoder",
+  "D:\\Tmp\\runs\\demo\\fault_invalid.pending.mp4"
+]

@@ -1,0 +1,32 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -234,6 +234,29 @@
+         raise
+ 
+ 
++def fault_demo(run_dir, config):
++    """Explicitly labeled diagnostic: real encoder failure, then real corrected encode."""
++    target = Path(run_dir).resolve()
++    target.mkdir(parents=True, exist_ok=True)
++    log = EventLogger(target, 'video_fault_injection', revision='diagnostic')
++    base = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=30:d=0.5', '-frames:v', '15']
++    bad = base + ['-c:v', 'deliberately_invalid_encoder', str(target / 'fault_invalid.pending.mp4')]
++    log.event('fault_injection_started', source='explicit diagnostic, not an ordinary render failure', argv=bad)
++    try:
++        renderer.execute(bad, target, 'fault_injected_bad_encoder', config.command_timeout_s)
++    except RuntimeError as exc:
++        log.event('fault_injection_observed', status='failed_as_expected', reason=str(exc))
++    else:
++        raise RuntimeError('Fault injection did not fail: diagnostic cannot pass')
++    good = base + ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', str(target / 'fault_recovered.mp4')]
++    renderer.execute(good, target, 'fault_recovered_encoder', config.command_timeout_s)
++    info = media.probe(target / 'fault_recovered.mp4', config)
++    if not any(s.get('codec_name') == 'h264' for s in info['streams']):
++        raise ValueError('Recovered output does not decode as H.264')
++    log.event('fault_recovered', status='pass', output=str(target / 'fault_recovered.mp4'), sha256=sha256_file(target / 'fault_recovered.mp4'))
++    manifest(target, read(target / 'assets.json'))
++
++
+ def main():
+     parser = argparse.ArgumentParser()
+     sub = parser.add_subparsers(dest='command', required=True)

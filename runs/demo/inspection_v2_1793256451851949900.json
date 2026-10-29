@@ -1,0 +1,68 @@
+{
+  "asset_id": "5cade409858635d0",
+  "summary": "**Visible:** At 3000 and 3250 ms, a dark-blue card with a thin border reads “DEMO_01.” At 3500, 3750, and 3999 ms, a brown card with the same layout reads “DEMO_02.” Each has a small, brightly colored rectangular inset below the title, with vertical bands, a diagonal stripe, and tiny markings. The inset differs slightly between sampled frames.\n\n**Possible shot choices:** The samples show a full-card view. A tighter crop on the title or inset is possible, but is not shown.\n\n**Uncertainty:** The inset’s tiny markings are not legible enough to identify. These frames do not establish how the cards change or what appears between samples.",
+  "observed_intervals": [
+    {
+      "start_ms": 3000,
+      "end_ms": 3000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 3250,
+      "end_ms": 3250,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 3500,
+      "end_ms": 3500,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 3750,
+      "end_ms": 3750,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 3999,
+      "end_ms": 3999,
+      "description": "Sampled point; see summary"
+    }
+  ],
+  "candidate_shots": [
+    {
+      "start_ms": 0,
+      "end_ms": 7000,
+      "status": "candidate, intervening content unobserved"
+    }
+  ],
+  "evidence_frames": [
+    {
+      "time_ms": 3000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256444729286600_5cade409858635d0_3000.jpg",
+      "sha256": "c1d235be384eb7191237aebf20f5b16431e2d0d33f22c4edf50d5d3ac9aee402"
+    },
+    {
+      "time_ms": 3250,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256444729286600_5cade409858635d0_3250.jpg",
+      "sha256": "4c7f2e0468850350f49bb59c72ac1b1f2715f8812230cd8bf1ab7f8bff7ae0ed"
+    },
+    {
+      "time_ms": 3500,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256444729286600_5cade409858635d0_3500.jpg",
+      "sha256": "47b6f8e973d0ed5eff820e6d3dc9da099293a24de9efde4f72241e9a7cf80c11"
+    },
+    {
+      "time_ms": 3750,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256444729286600_5cade409858635d0_3750.jpg",
+      "sha256": "6f3e78b4b37022c03a08eb9bb1ed5ebabc934b1ef16be65d8e676b9ac1afb660"
+    },
+    {
+      "time_ms": 3999,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256444729286600_5cade409858635d0_3999.jpg",
+      "sha256": "10c9820f37ec4839e9bfa55498611f0e25322b7aab02bcfed0d02846d8c4f5b6"
+    }
+  ],
+  "uncertainties": [
+    "Content between sampled frames is not verified"
+  ]
+}

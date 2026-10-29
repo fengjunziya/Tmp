@@ -1,0 +1,9 @@
+--- a/renderer.py
++++ b/renderer.py
+@@ -1,5 +1,6 @@
+ """Compile validated data to a restricted FFmpeg graph; never accept arbitrary filters."""
+ import json
++import html
+ import subprocess
+ import time
+ from pathlib import Path

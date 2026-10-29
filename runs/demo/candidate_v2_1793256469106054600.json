@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "version": 2,
+  "parent_version": 1,
+  "request_ids": [
+    "request_v1_d30ddbdd2632",
+    "request_v2_e9bb9f0da9ed"
+  ],
+  "asset_manifest_hash": "3cc725637e55f247a2384f2c5277a5a346103865175772ff47ca5a773f03e9f0",
+  "constraint_set_id": "550db0251126127d2d0fbbb20a7b9cff950ead93c43e6fcd99af402e78963908",
+  "output": {
+    "duration_ms": 10000,
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "container": "mp4",
+    "video_codec": "libx264",
+    "audio_codec": "aac"
+  },
+  "clips": [
+    {
+      "asset_id": "6691b06721d38699",
+      "kind": "image",
+      "timeline_start_ms": 0,
+      "duration_ms": 3500,
+      "source_start_ms": null,
+      "source_end_ms": null,
+      "fit": "pad",
+      "video_gain_db": null,
+      "video_mute": null,
+      "transition_out": {
+        "type": "cross_dissolve",
+        "duration_ms": 500
+      }
+    },
+    {
+      "asset_id": "5cade409858635d0",
+      "kind": "video",
+      "timeline_start_ms": 3000,
+      "duration_ms": 7000,
+      "source_start_ms": 3000,
+      "source_end_ms": 10000,
+      "fit": "pad",
+      "video_gain_db": -18,
+      "video_mute": false,
+      "transition_out": {
+        "type": "cut",
+        "duration_ms": 0
+      }
+    }
+  ],
+  "captions": [
+    {
+      "text": "让灵感再快一步",
+      "start_ms": 0,
+      "end_ms": 3000,
+      "position": "center"
+    },
+    {
+      "text": "由视频 Agent 自动剪辑",
+      "start_ms": 8000,
+      "end_ms": 10000,
+      "position": "bottom"
+    }
+  ],
+  "bgm": {
+    "asset_id": "ab9c1083346b42b1",
+    "gain_db": -20,
+    "fade_in_ms": 500,
+    "fade_out_ms": 500
+  }
+}

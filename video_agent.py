@@ -132,12 +132,25 @@ def run(version, args):
     request = Path(args.request).read_text(encoding='utf-8').strip()
     logger = EventLogger(run_dir, 'video', request_id=f'request_v{version}', revision=f'v{version}')
     started = time.monotonic()
+    deadline = started + config.total_timeout_s
     try:
         output = run_dir / f'output_v{version}.mp4'
         if output.exists() and read(run_dir / f'validation_v{version}.json')['status'] == 'pass':
             logger.event('already_completed', output=str(output))
             return
         client = ModelClient(config, logger)
+        model_calls = [0]
+        def bounded_model(model):
+            original = model.respond
+            def respond(*items, **options):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or model_calls[0] >= config.max_turns:
+                    raise TimeoutError('Total video model-call/time budget exhausted')
+                model_calls[0] += 1
+                options['timeout'] = min(remaining, options.get('timeout', config.request_timeout_s))
+                return original(*items, **options)
+            model.respond = respond
+        bounded_model(client)
         if version == 1:
             assets_path = run_dir / 'assets.json'
             assets = read(assets_path) if assets_path.exists() else media.inventory(args.assets, config)
@@ -161,6 +174,10 @@ def run(version, args):
         loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
         logger.event('planning_attempt', path=str(loop_dir), prior_attempt_preserved=retry_number > 0)
         loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
+        bounded_model(loop.model)
+        # AgentLoop measures its own elapsed time; subtract preflight/analysis/extraction
+        # so all stages share the Config total timeout, not a fresh per-stage allowance.
+        config.total_timeout_s = max(0.001, config.total_timeout_s - (time.monotonic() - started))
         state = {'timeline': None, 'derived': None, 'pending': None, 'validation': None, 'render_attempts': 0}
         def submit_timeline(**kw):
             candidate = SubmitArgs.model_validate(kw).timeline
@@ -234,6 +251,29 @@ def run(version, args):
         raise
 
 
+def fault_demo(run_dir, config):
+    """Explicitly labeled diagnostic: real encoder failure, then real corrected encode."""
+    target = Path(run_dir).resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    log = EventLogger(target, 'video_fault_injection', revision='diagnostic')
+    base = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=30:d=0.5', '-frames:v', '15']
+    bad = base + ['-c:v', 'deliberately_invalid_encoder', str(target / 'fault_invalid.pending.mp4')]
+    log.event('fault_injection_started', source='explicit diagnostic, not an ordinary render failure', argv=bad)
+    try:
+        renderer.execute(bad, target, 'fault_injected_bad_encoder', config.command_timeout_s)
+    except RuntimeError as exc:
+        log.event('fault_injection_observed', status='failed_as_expected', reason=str(exc))
+    else:
+        raise RuntimeError('Fault injection did not fail: diagnostic cannot pass')
+    good = base + ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', str(target / 'fault_recovered.mp4')]
+    renderer.execute(good, target, 'fault_recovered_encoder', config.command_timeout_s)
+    info = media.probe(target / 'fault_recovered.mp4', config)
+    if not any(s.get('codec_name') == 'h264' for s in info['streams']):
+        raise ValueError('Recovered output does not decode as H.264')
+    log.event('fault_recovered', status='pass', output=str(target / 'fault_recovered.mp4'), sha256=sha256_file(target / 'fault_recovered.mp4'))
+    manifest(target, read(target / 'assets.json'))
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest='command', required=True)
@@ -241,6 +281,9 @@ def main():
     create.add_argument('--assets', required=True)
     revise = sub.add_parser('revise')
     revise.add_argument('--base-revision', type=int, required=True)
+    diagnostic = sub.add_parser('fault-demo', help='Explicit labeled encoder-failure and recovery evidence')
+    diagnostic.add_argument('--run-dir', required=True)
+    diagnostic.add_argument('--config', default='config.example.json')
     for p in (create, revise):
         p.add_argument('--run-dir', required=True)
         p.add_argument('--request', required=True)
@@ -249,7 +292,10 @@ def main():
     if args.command == 'revise' and args.base_revision != 1:
         parser.error('Only revision 1 can be revised to version 2')
     try:
-        run(1 if args.command == 'create' else 2, args)
+        if args.command == 'fault-demo':
+            fault_demo(args.run_dir, load_config(args.config))
+        else:
+            run(1 if args.command == 'create' else 2, args)
     except Exception as exc:
         print(f'VIDEO_AGENT_FAILED: {type(exc).__name__}: {exc}', file=sys.stderr)
         sys.exit(1)

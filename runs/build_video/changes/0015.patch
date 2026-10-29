@@ -1,0 +1,13 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -173,6 +173,10 @@
+         loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
+         logger.event('planning_attempt', path=str(loop_dir), prior_attempt_preserved=retry_number > 0)
+         loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
++        bounded_model(loop.model)
++        # AgentLoop measures its own elapsed time; subtract preflight/analysis/extraction
++        # so all stages share the Config total timeout, not a fresh per-stage allowance.
++        config.total_timeout_s = max(0.001, config.total_timeout_s - (time.monotonic() - started))
+         state = {'timeline': None, 'derived': None, 'pending': None, 'validation': None, 'render_attempts': 0}
+         def submit_timeline(**kw):
+             candidate = SubmitArgs.model_validate(kw).timeline

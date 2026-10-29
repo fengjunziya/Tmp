@@ -1,0 +1,4 @@
+[vost#0:0 @ 00000222d623e040] Unknown encoder 'deliberately_invalid_encoder'
+[vost#0:0 @ 00000222d623e040] Error selecting an encoder
+Error opening output file D:\Tmp\runs\demo\fault_invalid.pending.mp4.
+Error opening output files: Encoder not found

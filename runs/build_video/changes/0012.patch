@@ -1,0 +1,24 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -264,6 +264,9 @@
+     create.add_argument('--assets', required=True)
+     revise = sub.add_parser('revise')
+     revise.add_argument('--base-revision', type=int, required=True)
++    diagnostic = sub.add_parser('fault-demo', help='Explicit labeled encoder-failure and recovery evidence')
++    diagnostic.add_argument('--run-dir', required=True)
++    diagnostic.add_argument('--config', default='config.example.json')
+     for p in (create, revise):
+         p.add_argument('--run-dir', required=True)
+         p.add_argument('--request', required=True)
+@@ -272,7 +275,10 @@
+     if args.command == 'revise' and args.base_revision != 1:
+         parser.error('Only revision 1 can be revised to version 2')
+     try:
+-        run(1 if args.command == 'create' else 2, args)
++        if args.command == 'fault-demo':
++            fault_demo(args.run_dir, load_config(args.config))
++        else:
++            run(1 if args.command == 'create' else 2, args)
+     except Exception as exc:
+         print(f'VIDEO_AGENT_FAILED: {type(exc).__name__}: {exc}', file=sys.stderr)
+         sys.exit(1)

@@ -1,0 +1,11 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -143,7 +143,7 @@
+         def bounded_model(model):
+             original = model.respond
+             def respond(*items, **options):
+-                remaining = config.total_timeout_s - (time.monotonic() - started)
++                remaining = deadline - time.monotonic()
+                 if remaining <= 0 or model_calls[0] >= config.max_turns:
+                     raise TimeoutError('Total video model-call/time budget exhausted')
+                 model_calls[0] += 1

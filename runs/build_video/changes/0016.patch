@@ -1,0 +1,10 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -132,6 +132,7 @@
+     request = Path(args.request).read_text(encoding='utf-8').strip()
+     logger = EventLogger(run_dir, 'video', request_id=f'request_v{version}', revision=f'v{version}')
+     started = time.monotonic()
++    deadline = started + config.total_timeout_s
+     try:
+         output = run_dir / f'output_v{version}.mp4'
+         if output.exists() and read(run_dir / f'validation_v{version}.json')['status'] == 'pass':

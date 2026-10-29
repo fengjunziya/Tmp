@@ -1,0 +1,58 @@
+{
+  "asset_id": "5cade409858635d0",
+  "summary": "**Visible:** Each sampled frame shows a dark green screen with a thin gray border and large white “DEMO_03” text at upper left. A small rectangle in the lower-left area contains bright vertical color bands, a diagonal multicolored stripe, and tiny markings. Its position and internal pattern differ across the four samples.\n\n**Possible shot choices:** A fixed-looking, wide title-card layout with a small inset graphic. No cut is visible in the sampled frames.\n\n**Uncertainty:** The markings are too small to identify confidently, and these point observations do not establish what happens between samples.",
+  "observed_intervals": [
+    {
+      "start_ms": 8000,
+      "end_ms": 8000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 8600,
+      "end_ms": 8600,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 9200,
+      "end_ms": 9200,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 9799,
+      "end_ms": 9799,
+      "description": "Sampled point; see summary"
+    }
+  ],
+  "candidate_shots": [
+    {
+      "start_ms": 0,
+      "end_ms": 7000,
+      "status": "candidate, intervening content unobserved"
+    }
+  ],
+  "evidence_frames": [
+    {
+      "time_ms": 8000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256451855607000_5cade409858635d0_8000.jpg",
+      "sha256": "5d05ceabd25369e0af3dfe6426a1d334bcf5acc1baef8509c17abf2ff7ea4e33"
+    },
+    {
+      "time_ms": 8600,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256451855607000_5cade409858635d0_8600.jpg",
+      "sha256": "ea9a25e19e819769cd64988fe4256f11332c8df437409101b3b6c10be7698e35"
+    },
+    {
+      "time_ms": 9200,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256451855607000_5cade409858635d0_9200.jpg",
+      "sha256": "4ce8f24ab40fa5b2c99c1aa25a5c361e81bd083b1709a8090b873207ea6a7d0b"
+    },
+    {
+      "time_ms": 9799,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256451855607000_5cade409858635d0_9799.jpg",
+      "sha256": "d3237ee2e0c3979c14b36908bffcecf6d26b0f0809a0ad0204896df77fec054c"
+    }
+  ],
+  "uncertainties": [
+    "Content between sampled frames is not verified"
+  ]
+}

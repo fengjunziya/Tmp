@@ -1,0 +1,21 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -138,6 +138,18 @@
+             logger.event('already_completed', output=str(output))
+             return
+         client = ModelClient(config, logger)
++        model_calls = [0]
++        def bounded_model(model):
++            original = model.respond
++            def respond(*items, **options):
++                remaining = config.total_timeout_s - (time.monotonic() - started)
++                if remaining <= 0 or model_calls[0] >= config.max_turns:
++                    raise TimeoutError('Total video model-call/time budget exhausted')
++                model_calls[0] += 1
++                options['timeout'] = min(remaining, options.get('timeout', config.request_timeout_s))
++                return original(*items, **options)
++            model.respond = respond
++        bounded_model(client)
+         if version == 1:
+             assets_path = run_dir / 'assets.json'
+             assets = read(assets_path) if assets_path.exists() else media.inventory(args.assets, config)
