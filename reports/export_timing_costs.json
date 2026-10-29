@@ -1,0 +1,139 @@
+{
+  "scope": "DeepSeek video exports only; project development and migration calls excluded",
+  "currency": "USD",
+  "cost_basis": "Published peak-rate estimate, not reconciled account billing",
+  "rates_per_million": {
+    "uncached_input": "0.3",
+    "cached_input": "0.006",
+    "output": "1.2"
+  },
+  "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "pricing_verified_on": "2026-10-29",
+  "exports": [
+    {
+      "revision": 1,
+      "output": "runs/deepseek_video/output_v1.mp4",
+      "video_duration_s": 10,
+      "successful_run_elapsed_s": 32.69530690001557,
+      "start_time_utc_plus_8": "2026-10-29T15:24:09.853+08:00",
+      "finished_time_utc_plus_8": "2026-10-29T15:24:42.549+08:00",
+      "successful_run_cost": {
+        "api_calls": 6,
+        "input_tokens": 48532,
+        "cached_input_tokens": 44672,
+        "uncached_input_tokens": 3860,
+        "output_tokens": 2989,
+        "estimated_usd": "0.005012832",
+        "response_ids": [
+          "c0838865-1500-44c5-ad9e-461e5d0a1919",
+          "f3302f67-ef0d-4c3b-bf15-f5f5c42daba2",
+          "6a658b44-fb17-44ce-ae80-d84346716596",
+          "e3a710a1-353e-4a2f-8a53-96fa3dd126e1",
+          "3920e8eb-d6df-46de-af11-4def711943b8",
+          "09b1ac5c-52e8-412a-859d-5596e2a8dedf"
+        ]
+      },
+      "cumulative_known_cost": {
+        "api_calls": 16,
+        "input_tokens": 129875,
+        "cached_input_tokens": 115456,
+        "uncached_input_tokens": 14419,
+        "output_tokens": 32769,
+        "estimated_usd": "0.044341236",
+        "response_ids": [
+          "c0838865-1500-44c5-ad9e-461e5d0a1919",
+          "f3302f67-ef0d-4c3b-bf15-f5f5c42daba2",
+          "6a658b44-fb17-44ce-ae80-d84346716596",
+          "e3a710a1-353e-4a2f-8a53-96fa3dd126e1",
+          "3920e8eb-d6df-46de-af11-4def711943b8",
+          "09b1ac5c-52e8-412a-859d-5596e2a8dedf",
+          "8edf3b2d-1f01-4664-9dae-57d6d98b0433",
+          "58e10a7a-57c3-4cb3-b6f7-a20eafa5001d",
+          "c69f67ec-a73b-4341-be4a-cfcc234d72d1",
+          "a851ff6b-9c60-4e00-b910-151c59c48dd1",
+          "5c1b715e-9441-4b9e-9677-f707ea4a9c85",
+          "49f97dc3-9ded-4a57-80fa-08f42c041dff",
+          "cc8cd592-c7f6-4fd2-aec2-b50687eb9994",
+          "d01718cf-c37e-467d-92ba-f268a4e1b823",
+          "9502a49e-e938-48d4-b264-241ee2e1f8ca",
+          "f29fcd20-2067-4678-8040-29a2b766f6a9"
+        ]
+      }
+    },
+    {
+      "revision": 2,
+      "output": "runs/deepseek_video/output_v2.mp4",
+      "video_duration_s": 10,
+      "successful_run_elapsed_s": 40.27988400001777,
+      "start_time_utc_plus_8": "2026-10-29T15:26:43.009+08:00",
+      "finished_time_utc_plus_8": "2026-10-29T15:27:23.289+08:00",
+      "successful_run_cost": {
+        "api_calls": 7,
+        "input_tokens": 48853,
+        "cached_input_tokens": 38144,
+        "uncached_input_tokens": 10709,
+        "output_tokens": 4001,
+        "estimated_usd": "0.008242764",
+        "response_ids": [
+          "19ed12b9-d12a-42ec-aa57-e9d2455c4a1c",
+          "d63eeada-b867-447a-b52b-6c183c24cacb",
+          "ac6e4c2b-c037-4347-a066-c3e6bc404817",
+          "41e44623-52e8-4c20-b2bf-714b812c4b4d",
+          "f7d83310-550c-4d8c-b0c0-bd64be242186",
+          "a737309c-92d5-408c-827b-9580ec27cc2b",
+          "8c92fd21-1114-4877-a7ed-540886a888cc"
+        ]
+      },
+      "cumulative_known_cost": {
+        "api_calls": 7,
+        "input_tokens": 48853,
+        "cached_input_tokens": 38144,
+        "uncached_input_tokens": 10709,
+        "output_tokens": 4001,
+        "estimated_usd": "0.008242764",
+        "response_ids": [
+          "19ed12b9-d12a-42ec-aa57-e9d2455c4a1c",
+          "d63eeada-b867-447a-b52b-6c183c24cacb",
+          "ac6e4c2b-c037-4347-a066-c3e6bc404817",
+          "41e44623-52e8-4c20-b2bf-714b812c4b4d",
+          "f7d83310-550c-4d8c-b0c0-bd64be242186",
+          "a737309c-92d5-408c-827b-9580ec27cc2b",
+          "8c92fd21-1114-4877-a7ed-540886a888cc"
+        ]
+      }
+    }
+  ],
+  "preparation": {
+    "api_calls": 3,
+    "input_tokens": 1990,
+    "cached_input_tokens": 0,
+    "uncached_input_tokens": 1990,
+    "output_tokens": 7462,
+    "estimated_usd": "0.0095514",
+    "response_ids": [
+      "8edf3b2d-1f01-4664-9dae-57d6d98b0433",
+      "58e10a7a-57c3-4cb3-b6f7-a20eafa5001d",
+      "c69f67ec-a73b-4341-be4a-cfcc234d72d1"
+    ]
+  },
+  "unsuccessful_v1_attempt": {
+    "api_calls": 7,
+    "input_tokens": 79353,
+    "cached_input_tokens": 70784,
+    "uncached_input_tokens": 8569,
+    "output_tokens": 22318,
+    "estimated_usd": "0.029777004",
+    "response_ids": [
+      "a851ff6b-9c60-4e00-b910-151c59c48dd1",
+      "5c1b715e-9441-4b9e-9677-f707ea4a9c85",
+      "49f97dc3-9ded-4a57-80fa-08f42c041dff",
+      "cc8cd592-c7f6-4fd2-aec2-b50687eb9994",
+      "d01718cf-c37e-467d-92ba-f268a4e1b823",
+      "9502a49e-e938-48d4-b264-241ee2e1f8ca",
+      "f29fcd20-2067-4678-8040-29a2b766f6a9"
+    ]
+  },
+  "known_video_run_total_usd": "0.052584000",
+  "unknown_costs": "Any interrupted request with no returned usage remains unknown and is excluded, not priced as zero.",
+  "timing_scope": "Two successful invocation elapsed_s values include planning, rendering and verification. Prior source analysis/requirement extraction caches were reused; earlier failed attempts and code repair time are excluded."
+}
