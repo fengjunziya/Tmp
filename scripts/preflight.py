@@ -23,6 +23,8 @@ import zlib
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from agent_core import Config, EventLogger, ModelClient, load_config
 FONT_CANDIDATES = (Path("C:/Windows/Fonts/msyh.ttc"), Path("C:/Windows/Fonts/simhei.ttf"))
 
 
@@ -106,22 +108,21 @@ def ffmpeg_capabilities(path: str | None) -> dict[str, Any]:
     return result
 
 
-def check_model() -> dict[str, Any]:
+def check_model(config: Config) -> dict[str, Any]:
     """Run one constrained Responses call with an actual image and function tool."""
     started = time.perf_counter()
     try:
-        from openai import OpenAI
-
         # The tested demo still is preferred. The stdlib color card is a portable fallback.
         demo_still = ROOT / "materials" / "demo" / "still.png"
         image_bytes = demo_still.read_bytes() if demo_still.is_file() else make_probe_png()
         image = base64.b64encode(image_bytes).decode("ascii")
         image_source = "demo_still" if demo_still.is_file() else "generated_color_card"
-        client = OpenAI(timeout=30.0, max_retries=0)
-        response = client.responses.create(
-            model="gpt-6-sol",
-            reasoning={"effort": "high"},
-            input=[{"role": "user", "content": [
+        logger = EventLogger(ROOT / "reports" / "model_probe_deepseek", stage="preflight")
+        client = ModelClient(config, logger)
+        response = client.respond(
+            purpose="deepseek_image_and_function_probe",
+            timeout=30.0,
+            input_items=[{"role": "user", "content": [
                 {"type": "input_text", "text": "Inspect the image and call report_capability with a brief description of the colors, shapes, and any visible text you actually see."},
                 {"type": "input_image", "image_url": f"data:image/png;base64,{image}"},
             ]}],
@@ -136,7 +137,7 @@ def check_model() -> dict[str, Any]:
                 },
                 "strict": True,
             }],
-            tool_choice={"type": "function", "name": "report_capability"},
+            tool_choice="auto",
         )
         output = getattr(response, "output", [])
         calls = [item for item in output if getattr(item, "type", None) == "function_call"
@@ -152,8 +153,10 @@ def check_model() -> dict[str, Any]:
         return {
             "attempted": True,
             "ok": bool(calls and isinstance(observed, str) and observed.strip()),
-            "model_requested": "gpt-6-sol",
-            "reasoning_effort_requested": "high",
+            "model_requested": config.model,
+            "reasoning_effort_requested": config.reasoning_effort,
+            "api_base": config.api_base,
+            "credential_env": config.api_key_env,
             "model_returned": getattr(response, "model", None),
             "response_id": getattr(response, "id", None),
             "request_id": getattr(response, "_request_id", None),
@@ -170,7 +173,8 @@ def check_model() -> dict[str, Any]:
     except Exception as exc:  # Never persist exception text, which might include credentials.
         return {
             "attempted": True, "ok": False,
-            "model_requested": "gpt-6-sol", "reasoning_effort_requested": "high",
+            "model_requested": config.model, "reasoning_effort_requested": config.reasoning_effort,
+            "api_base": config.api_base, "credential_env": config.api_key_env,
             "latency_ms": round((time.perf_counter() - started) * 1000),
             "error_type": type(exc).__name__,
             "status_code": getattr(exc, "status_code", None),
@@ -181,8 +185,10 @@ def check_model() -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "reports" / "env_check.json")
-    parser.add_argument("--check-model", action="store_true", help="Make one gpt-6-sol Responses call")
+    parser.add_argument("--config", type=Path, default=ROOT / "config.example.json")
+    parser.add_argument("--check-model", action="store_true", help="Make one deepseek-flash Responses call")
     args = parser.parse_args()
+    config = load_config(args.config)
 
     ffmpeg = tool_version("ffmpeg")
     fonts = [{"path": str(path), "usable": path.is_file() and path.stat().st_size > 0}
@@ -194,8 +200,9 @@ def main() -> int:
                   "ffprobe": tool_version("ffprobe")},
         "ffmpeg_capabilities": ffmpeg_capabilities(ffmpeg["path"]),
         "chinese_fonts": fonts,
-        "openai_api_key_present": bool(os.environ.get("OPENAI_API_KEY")),
-        "model_check": check_model() if args.check_model else {"attempted": False, "cost_usd": None},
+        "credential_env": config.api_key_env,
+        "api_key_present": bool(os.environ.get(config.api_key_env)),
+        "model_check": check_model(config) if args.check_model else {"attempted": False, "cost_usd": None},
     }
     caps = report["ffmpeg_capabilities"]
     report["ready_local"] = all((
@@ -210,7 +217,7 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Preflight report: {args.output.resolve()}")
-    print(f"Local toolchain ready: {report['ready_local']}; API key present: {report['openai_api_key_present']}; model check: {report['ready_model']}")
+    print(f"Local toolchain ready: {report['ready_local']}; DeepSeek key present: {report['api_key_present']}; model check: {report['ready_model']}")
     return 0 if report["ready_local"] and (not args.check_model or report["ready_model"]) else 1
 
 

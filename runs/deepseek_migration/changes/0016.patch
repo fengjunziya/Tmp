@@ -1,0 +1,11 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -30,7 +30,7 @@
+ def media_duration_checks(info, expected_ms, fps):
+     """Compare real audio-stream coverage and container duration to the plan."""
+     audio = next((s for s in info.get('streams', []) if s.get('codec_type') == 'audio'), None)
+-    tolerance = max(150, round(3000 / fps)) if fps else 150
++    tolerance = max(100, round(2000 / fps)) if fps else 100
+     audio_ms = stream_duration_ms(audio, info)
+     container_ms = stream_duration_ms(info.get('format'), info)
+     try:

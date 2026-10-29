@@ -1,0 +1,7 @@
+test_real_media_duration_check_rejects_short_audio (test_video.AudioCoverageTest.test_real_media_duration_check_rejects_short_audio) ... ok
+test_bgm_only_change_preserves_baseline_title_and_order (test_video.RevisionExtractionTest.test_bgm_only_change_preserves_baseline_title_and_order) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.058s
+
+OK

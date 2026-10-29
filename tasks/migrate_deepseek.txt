@@ -1,0 +1,12 @@
+用户最新明确：禁止使用 OPENAI_API_KEY，项目两个Agent改为 deepseek-flash，通过 DEEPSEEK_API_KEY 接入 https://api.deepseek.com Responses API。已由主执行者完成 agent_core.py/config.example.json/coding_agent.py/preflight 与凭据回退防护。DeepSeek 官方有效模型名 deepseek-flash（用户写deepeek-flash）。现在你就是这个真实DeepSeek Coding Agent，请完成业务源代码接入与必要收尾，不能调用其他模型、不能读取或打印密钥、不能删除文件、不能改验收/核心/配置、不能提交Git。
+
+只处理源码接入，禁止运行 create/revise 再剪视频。旧 runs/demo 两版视频仍是此前 OpenAI 模型生成的历史结果，不能改称 DeepSeek 成果、不能覆盖或重标历史日志。你的新调用和源码diff保存在本次run-dir，可以用来证明切换后的Coding Agent真正运行。
+
+先分段读取实际 video_agent.py、verify.py、renderer.py 和 README.md。此前final_hardening进程被主执行者暂停，media.py/timeline.py/video_agent.py/renderer.py已有未提交的源码修改，请保留它们并保证语法和接口一致。按以下最小范围完成：
+1. video_agent.py 中 gpt-6-sol/high 旧模型提示改成读取 config.model/config.reasoning_effort 的动态提示；任何当前业务入口不允许创建默认 OpenAI SDK 客户端或使用 OPENAI_API_KEY。所有模型请求必须通过共享ModelClient/AgentLoop。迁移后运行另用新目录，旧检查点不跨提供商恢复。
+2. 修复已经识别的短音轨问题：renderer每镜头音频先补足再裁到片段，最终混音也补足再裁到计算片长；verify检查音频流实际覆盖长度和容器时长，不仅仅检查AAC存在。不要改变现有两版成片和原验证，必要时用ffprobe生成只读音轨复核JSON，无需视觉API或重渲染。
+3. 兼容当前requirements()已从固定标题+顺序变为支持字段的任意明确修改；verify不应假定必须有片头/片尾字幕，无字幕不调用next()报错。中文给定文案继续支持，字幕ASS/HTML控制序列可以明确拒绝，避免注入。
+4. 最多写3个必要的tests/test_video.py检查，用mock需求提取结果验证“只改BGM音量仍保留旧标题/顺序”，以及真实生产函数拒绝短音轨/或音频长度检查生效。不要重复整套单测，不生成新视频。
+5. 更新README：DEEPSEEK_API_KEY设置、模型deepseek-flash、高推理、官方端点、无OpenAI凭据回退、新运行目录示例；明确旧runs/demo来自迁移前，当前DeepSeek接入仅做真实图片/工具调用和源码修改验证，本次没有重新渲染两部片。历史运行与费用需分提供商统计。ASR没配置时失败、正常速度基础效果、v1->v2限制继续如实说明。预检报告应指向reports/env_check_deepseek.json。
+
+验收只需 python -m py_compile 5个业务文件；python -m unittest discover -s tests -p test_video.py；python scripts/accept_video.py（只读取已有两版，不重新渲染）。所有源码修改通过write_file/replace_text工具，不能通过run_process写源代码。预算有限，完成后调用finish，清楚说明未完成项。若发现与此迁移无关的问题，记录即可不要扩展功能。

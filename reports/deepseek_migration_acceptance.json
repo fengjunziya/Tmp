@@ -1,0 +1,28 @@
+{
+  "commands": [
+    [
+      "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "-m",
+      "py_compile",
+      "video_agent.py",
+      "media.py",
+      "timeline.py",
+      "renderer.py",
+      "verify.py"
+    ],
+    [
+      "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_video.py"
+    ],
+    [
+      "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "scripts/accept_video.py"
+    ]
+  ]
+}

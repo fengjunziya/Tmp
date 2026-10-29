@@ -1,0 +1,10 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -198,6 +198,7 @@
+             completed_matches(run_dir, version, request, assets)
+             logger.event('already_completed', output=str(output), verified_request_and_sources=True)
+             return
++        ensure_provider_checkpoints(run_dir, config)
+         client = ModelClient(config, logger)
+         model_calls = [0]
+         def bounded_model(model):

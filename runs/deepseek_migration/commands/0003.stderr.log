@@ -1,0 +1,4 @@
+warning: in the working copy of 'media.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'renderer.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'timeline.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'video_agent.py', LF will be replaced by CRLF the next time Git touches it

@@ -1,0 +1,11 @@
+warning: in the working copy of 'AGENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent_core.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'coding_agent.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/requirements.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'media.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'renderer.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/preflight.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tasks/build_video_agent.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_agent_core.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'timeline.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'video_agent.py', LF will be replaced by CRLF the next time Git touches it

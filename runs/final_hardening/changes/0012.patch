@@ -1,0 +1,8 @@
+--- a/D:\Tmp\timeline.py
++++ b/D:\Tmp\timeline.py
+@@ -1,4 +1,5 @@
+ """Strict editable timeline schema and source/constraint semantic checks."""
++import re
+ from typing import Literal
+ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+ 

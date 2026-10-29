@@ -1,0 +1,111 @@
+"""Focused regression tests for the migrated video agent."""
+from __future__ import annotations
+
+import copy
+import json
+import unittest
+from pathlib import Path
+from unittest import mock
+
+import media
+import verify
+import video_agent
+from agent_core import load_config
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class _Response:
+    def __init__(self, payload):
+        self.output_text = json.dumps(payload, ensure_ascii=False)
+
+
+class _FakeClient:
+    def __init__(self, payload):
+        self.payload = payload
+        self.calls = []
+
+    def respond(self, input_items, purpose=""):
+        self.calls.append((input_items, purpose))
+        return _Response(self.payload)
+
+
+class RevisionExtractionTest(unittest.TestCase):
+    def test_bgm_only_change_preserves_baseline_title_and_order(self):
+        baseline_raw = "标题写十秒灵感，视频在前、图片在后，BGM -20dB"
+        baseline = {
+            "request_id": "request_v1_baseline",
+            "request_ids": ["request_v1_baseline"],
+            "raw_text": baseline_raw,
+            "hard_constraints": [
+                {"requirement_id": "R1_title_text", "field": "title_text",
+                 "expected": "十秒灵感", "source_text": "标题写十秒灵感"},
+                {"requirement_id": "R1_clip_order", "field": "clip_order",
+                 "expected": ["video", "image"], "source_text": "视频在前、图片在后"},
+                {"requirement_id": "R1_bgm_gain_db", "field": "bgm_gain_db",
+                 "expected": -20, "source_text": "BGM -20dB"},
+            ],
+        }
+        new_raw = "只把BGM音量改为 -26dB，其他不变"
+        client = _FakeClient({
+            "changes": [{"field": "bgm_gain_db", "expected": -26,
+                         "source_text": "BGM音量改为 -26dB",
+                         "reason": "用户明确只调整 BGM 音量"}],
+            "soft_preferences": [],
+            "dialogue_transcription_requested": False,
+            "unsupported_requirements": [],
+        })
+        saved = {}
+
+        def fake_read(path):
+            if Path(path).name == "requirements_v1.json":
+                return baseline
+            raise AssertionError(f"Unexpected read: {path}")
+
+        def fake_save(path, value):
+            saved["path"] = Path(path)
+            saved["value"] = value
+
+        with mock.patch.object(video_agent, "read", side_effect=fake_read), \
+                mock.patch.object(video_agent, "save", side_effect=fake_save):
+            result = video_agent.requirements(
+                ROOT / "tests" / "_requirements_dir_that_does_not_exist",
+                2, new_raw, client,
+            )
+
+        fields = {row["field"]: row["expected"] for row in result["hard_constraints"]}
+        self.assertEqual(fields["title_text"], "十秒灵感")
+        self.assertEqual(fields["clip_order"], ["video", "image"])
+        self.assertEqual(fields["bgm_gain_db"], -26)
+        self.assertEqual(result["superseded_requirement_ids"], ["R1_bgm_gain_db"])
+        self.assertEqual(saved["path"].name, "requirements_v2.json")
+        self.assertIs(saved["value"], result)
+        self.assertEqual(client.calls[0][1], "extract_revision_changes")
+
+
+class AudioCoverageTest(unittest.TestCase):
+    def test_real_media_duration_check_rejects_short_audio(self):
+        movie = ROOT / "runs" / "demo" / "output_v1.mp4"
+        self.assertTrue(movie.is_file(), "Existing demo is read-only evidence for this check")
+        info = media.probe(movie, load_config(None))
+        good = verify.media_duration_checks(info, 10000, 30)
+        self.assertTrue(good["audio_ok"], good)
+        self.assertTrue(good["container_ok"], good)
+        self.assertEqual(good["expected_ms"], 10000)
+
+        short = copy.deepcopy(info)
+        audio = next(stream for stream in short["streams"] if stream["codec_type"] == "audio")
+        audio["duration"] = "7.000000"
+        short["format"]["duration"] = "7.000000"
+        bad = verify.media_duration_checks(short, 10000, 30)
+        self.assertFalse(bad["audio_ok"], bad)
+        self.assertFalse(bad["container_ok"], bad)
+        self.assertGreaterEqual(bad["expected_ms"] - bad["audio_ms"], 2000)
+
+        missing = copy.deepcopy(info)
+        missing["streams"] = [stream for stream in missing["streams"] if stream["codec_type"] != "audio"]
+        self.assertFalse(verify.media_duration_checks(missing, 10000, 30)["audio_ok"])
+
+
+if __name__ == "__main__":
+    unittest.main()

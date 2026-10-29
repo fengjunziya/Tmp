@@ -1,0 +1,35 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -27,6 +27,32 @@
+ 
+ def parse_response(text):
+     return json.loads(text.strip().removeprefix('```json').removesuffix('```').strip())
++
++
++def verify_sources(assets):
++    for a in assets['assets']:
++        path = Path(assets['asset_root']) / a['relative_path']
++        if not path.is_file() or sha256_file(path) != a['sha256']:
++            raise ValueError(f'Source asset changed; frozen analysis invalid: {a["relative_path"]}')
++
++
++def completed_matches(run_dir, version, raw, assets):
++    req = read(run_dir / f'requirements_v{version}.json')
++    if req['raw_text'] != raw:
++        raise ValueError('Completed version belongs to a different request')
++    verify_sources(assets)
++    t, derived = timeline.check(read(run_dir / f'timeline_v{version}.json'), assets, req)
++    stored = read(run_dir / f'derived_v{version}.json')
++    if derived != stored or t.asset_manifest_hash != assets['manifest_hash']:
++        raise ValueError('Completed timeline/derived result changed')
++    validation = read(run_dir / f'validation_v{version}.json')
++    if validation['status'] != 'pass':
++        raise ValueError('Completed version has no passing validation')
++    output = run_dir / f'output_v{version}.mp4'
++    recorded = next((x['sha256'] for x in read(run_dir / 'manifest.json')['files']
++                     if x['path'] == output.name), None)
++    if recorded is None or sha256_file(output) != recorded:
++        raise ValueError('Completed video differs from published manifest')
+ 
+ 
+ def requirements(run_dir, version, raw, client):

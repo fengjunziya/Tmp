@@ -68,13 +68,26 @@ def frames(asset, root, run_dir, config, points, prefix):
     return results
 
 
+def sampling_interval(config):
+    interval = getattr(config, 'sample_interval_ms', 2500)
+    if type(interval) is not int or not 2000 <= interval <= 5000:
+        raise ValueError('sample_interval_ms must be an integer between 2000 and 5000')
+    return interval
+
+
+def sample_points(asset, config):
+    if asset['kind'] != 'video':
+        return [0]
+    duration = asset['duration_ms']
+    interval = sampling_interval(config)
+    return sorted(set([*range(0, duration, interval), max(0, duration - 200)]))
+
+
 def observe(asset, inventory_data, run_dir, config, model, points=None, prefix='sample'):
     if asset['kind'] == 'audio':
         return {'asset_id': asset['asset_id'], 'summary': 'Audio only; probe metadata, no visual evidence or semantic transcription.', 'observed_intervals': [], 'candidate_shots': [], 'evidence_frames': [], 'uncertainties': ['Audio semantics not transcribed']}
     if points is None:
-        duration = asset['duration_ms'] or 0
-        points = [0, 2500, 5000, 7500, max(0, duration - 200)] if asset['kind'] == 'video' else [0]
-        points = sorted(set(t for t in points if t < duration)) if asset['kind'] == 'video' else [0]
+        points = sample_points(asset, config)
     samples = frames(asset, inventory_data['asset_root'], run_dir, config, points, prefix)
     content = [{'type': 'input_text', 'text': f"Describe only what is actually visible in these sampled frames of {asset['relative_path']}; each frame is a point observation, not proof of intervening scenes. Return a short factual description, possible shot choices, and uncertainty."}]
     for frame in samples:

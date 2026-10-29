@@ -18,6 +18,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
+from urllib.parse import urlsplit
 
 from openai import OpenAI
 from openai import APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
@@ -51,10 +52,10 @@ class Config(BaseModel):
 
     model_config = ConfigDict(extra="allow", validate_assignment=True)
 
-    model: str = "gpt-6-sol"
+    model: str = "deepseek-flash"
     reasoning_effort: str = "high"
-    api_base: str | None = None
-    api_key_env: str = "OPENAI_API_KEY"
+    api_base: str = "https://api.deepseek.com"
+    api_key_env: str = "DEEPSEEK_API_KEY"
     api_retries: int = Field(default=2, ge=0, le=2)
     max_turns: int = Field(default=60, ge=1)
     request_timeout_s: float = Field(default=120, gt=0)
@@ -78,9 +79,24 @@ class Config(BaseModel):
     @field_validator("model")
     @classmethod
     def _fixed_model(cls, value: str) -> str:
-        if value != "gpt-6-sol":
-            raise ValueError("Only gpt-6-sol is authorized for delegated agents")
+        if value != "deepseek-flash":
+            raise ValueError("Project runtime is restricted to deepseek-flash by the user's latest instruction")
         return value
+
+    @field_validator("api_key_env")
+    @classmethod
+    def _fixed_credential(cls, value: str) -> str:
+        if value != "DEEPSEEK_API_KEY":
+            raise ValueError("Only DEEPSEEK_API_KEY is authorized; credential fallback is disabled")
+        return value
+
+    @field_validator("api_base")
+    @classmethod
+    def _deepseek_endpoint(cls, value: str) -> str:
+        parts = urlsplit(value)
+        if parts.scheme != "https" or parts.netloc != "api.deepseek.com" or parts.path.rstrip("/") not in {"", "/v1"} or parts.query or parts.fragment:
+            raise ValueError("DEEPSEEK_API_KEY may only be sent to the official https://api.deepseek.com endpoint")
+        return value.rstrip("/")
 
     @field_validator("reasoning_effort")
     @classmethod
@@ -230,9 +246,9 @@ class ModelClient:
             "max_retries": 0,
             "timeout": config.request_timeout_s,
         }
-        base_url = config.api_base or os.environ.get("OPENAI_BASE_URL")
-        if base_url:
-            options["base_url"] = base_url
+        # Always explicit: never allow the SDK to inherit another provider's
+        # API key or OPENAI_BASE_URL from the surrounding desktop environment.
+        options["base_url"] = config.api_base
         self.client = OpenAI(**options)
         usage_path = logger.run_dir / "usage.json"
         if usage_path.exists():
@@ -282,6 +298,9 @@ class ModelClient:
             sum(known_costs) if len(known_costs) == len(successes) and successes else None
         )
         self.logger.write_json("usage.json", {
+            "provider": "deepseek",
+            "api_base": self.config.api_base,
+            "credential_env": self.config.api_key_env,
             "model": self.config.model,
             "pricing": self.config.pricing,
             "calls": self.calls,
@@ -308,7 +327,7 @@ class ModelClient:
         forbidden = {"model", "reasoning", "input", "tools", "instructions"} & extra.keys()
         if forbidden:
             raise ValueError(f"Reserved Responses arguments cannot be overridden: {sorted(forbidden)}")
-        if self.config.model != "gpt-6-sol" or self.config.reasoning_effort != "high":
+        if self.config.model != "deepseek-flash" or self.config.reasoning_effort != "high" or self.config.api_key_env != "DEEPSEEK_API_KEY":
             raise ValueError("Delegated agent model and reasoning constraints were changed")
         args: dict[str, Any] = {
             "model": self.config.model,
@@ -329,7 +348,8 @@ class ModelClient:
                 status_code = getattr(error, "status_code", None)
                 record = {
                     "timestamp": _utc_now(), "purpose": purpose, "attempt": attempt + 1,
-                    "status": "failed", "model": self.config.model,
+                    "status": "failed", "provider": "deepseek", "api_base": self.config.api_base,
+                    "credential_env": self.config.api_key_env, "model": self.config.model,
                     "latency_s": round(elapsed, 3), "http_status": status_code,
                     "request_id": getattr(error, "request_id", None),
                     "error_type": type(error).__name__, "error": str(error),
@@ -351,7 +371,8 @@ class ModelClient:
             usage = self._usage(response)
             record = {
                 "timestamp": _utc_now(), "purpose": purpose, "attempt": attempt + 1,
-                "status": "succeeded", "model": _field(response, "model", self.config.model),
+                "status": "succeeded", "provider": "deepseek", "api_base": self.config.api_base,
+                "credential_env": self.config.api_key_env, "model": _field(response, "model", self.config.model),
                 "latency_s": round(elapsed, 3), "http_status": 200,
                 "request_id": _field(response, "_request_id"),
                 "response_id": _field(response, "id"), **usage,
@@ -465,13 +486,18 @@ class AgentLoop:
                           name=name, call_id=call_id, result=result)
         return result, json.dumps(result, ensure_ascii=False)
 
-    def run(self, task: str, system_prompt: str = "", resume: bool = False) -> dict[str, Any]:
+    def run(self, task: str, system_prompt: str = "", resume: bool = False,
+            followup: str | None = None) -> dict[str, Any]:
         checkpoint_path = self.logger.run_dir / "checkpoint.json"
+        runtime_config = {"model": self.config.model, "api_base": self.config.api_base,
+                          "credential_env": self.config.api_key_env}
         if resume:
             if not checkpoint_path.exists():
                 raise FileNotFoundError(f"No checkpoint in {self.logger.run_dir}")
             with checkpoint_path.open("r", encoding="utf-8") as stream:
                 state = self._restore_images(json.load(stream))
+            if state.get("runtime_config") != runtime_config:
+                raise ValueError("Checkpoint belongs to another or legacy provider; use a new run directory after migration")
             if state.get("task") != self.logger.sanitize(task):
                 raise ValueError("Resume task differs from checkpoint task")
             if state.get("system_prompt") != self.logger.sanitize(system_prompt):
@@ -479,9 +505,13 @@ class AgentLoop:
             if state.get("status") == "completed":
                 return state["result"]
             state["status"] = "running"
+            if followup:
+                state["input_items"].append({"role": "user", "content": followup})
+                self.logger.event("operator_followup", actor="operator", content=followup)
         else:
             state = {
                 "version": 1, "run_id": self.logger.run_id, "status": "running",
+                "runtime_config": runtime_config,
                 "task": task, "system_prompt": system_prompt,
                 "turn": 0, "elapsed_s": 0.0,
                 "input_items": [{"role": "user", "content": task}],

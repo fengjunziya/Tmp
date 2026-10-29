@@ -1,0 +1,22 @@
+{
+  "recorded_at": "2026-10-29T07:13:31.069211+00:00",
+  "implementation_elapsed_minutes": 44.53,
+  "timing_scope": "Implementation from initial project code/config creation. Earlier document reading and model discovery not measured. Formal 180-minute exam clock and scope not confirmed.",
+  "formal_exam_clock_verified": false,
+  "user_budget_minutes": 120,
+  "stage_a_commit": "289150cda6649c008631506570b61ef403a0d4f3",
+  "current_commit": "dbd4be0acc69d033c1bffb8c3544a5842e82db5f",
+  "revisions": {
+    "v1": {
+      "status": "pass",
+      "output": "runs\\demo\\output_v1.mp4",
+      "sha256": "329bea6e3a0c51b936830730f4fd5da4522bd518864f850285ea233e5787509e"
+    },
+    "v2": {
+      "status": "pass",
+      "output": "runs\\demo\\output_v2.mp4",
+      "sha256": "8fef392c78f644a0bde7549f3332047ffc5b3a7bd37f407a837062fff811e73c"
+    }
+  },
+  "usage_file": "reports/project_usage.json"
+}

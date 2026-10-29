@@ -1,0 +1,41 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -4,6 +4,38 @@
+ from pathlib import Path
+ from media import probe
+ from renderer import execute
++
++
++def stream_duration_ms(stream, info):
++    value = stream.get('duration') if stream else None
++    if value in (None, 'N/A'):
++        value = info.get('format', {}).get('duration')
++    try:
++        return round(float(value) * 1000)
++    except (TypeError, ValueError):
++        return None
++
++
++def media_duration_checks(info, expected_ms, fps):
++    """Compare real audio-stream coverage and container duration to the plan."""
++    audio = next((s for s in info.get('streams', []) if s.get('codec_type') == 'audio'), None)
++    tolerance = max(150, round(3000 / fps)) if fps else 150
++    audio_ms = stream_duration_ms(audio, info)
++    container_ms = stream_duration_ms(info.get('format'), info)
++    try:
++        audio_start_ms = round(float(audio.get('start_time', 0) or 0) * 1000) if audio else None
++    except (TypeError, ValueError):
++        audio_start_ms = None
++    return {
++        'audio_ms': audio_ms,
++        'audio_start_ms': audio_start_ms,
++        'container_ms': container_ms,
++        'expected_ms': expected_ms,
++        'tolerance_ms': tolerance,
++        'audio_ok': audio_ms is not None and abs(audio_ms - expected_ms) <= tolerance
++                    and (audio_start_ms is None or audio_start_ms <= tolerance),
++        'container_ok': container_ms is not None and abs(container_ms - expected_ms) <= tolerance,
++    }
+ 
+ 
+ def verify(pending, t, derived, inventory, requirements, config, run_dir, model):

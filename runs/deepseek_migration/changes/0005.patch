@@ -1,0 +1,10 @@
+--- a/D:\Tmp\renderer.py
++++ b/D:\Tmp\renderer.py
+@@ -105,6 +105,7 @@
+     # Pad every audio branch before the final trim: a short BGM/source or AAC
+     # encoder delay must not leave the computed movie duration without audio.
+     graph.append(f'[{aa}]apad,atrim=duration={length/1000}[finala]')
++    aa = 'finala'
+     # cwd relative SRT avoids Windows drive-letter colon escaping in filter expressions.
+     if t.captions:
+         graph.append(f"[{vv}]subtitles=filename='{srt.name}':force_style='FontName=Microsoft YaHei,FontSize=40,Alignment=2,MarginV=52'[finalv]")

@@ -1,0 +1,16 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -221,7 +221,12 @@
+             loop_dir = run_dir / f'agent_v{version}_retry{retry_number}'
+         loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
+         logger.event('planning_attempt', path=str(loop_dir), prior_attempt_preserved=retry_number > 0)
+-        loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
++        config.max_turns = min(config.max_turns, 20)
++        schema = timeline.Timeline.model_json_schema()
++        # JSON Schema $defs must be at the root for local $ref resolution.
++        submit_schema = spec('submit_timeline', {'timeline': {'$ref': '#/$defs/Timeline'}}, ['timeline'])
++        submit_schema['parameters']['$defs'] = {**schema.get('$defs', {}), 'Timeline': {k: v for k, v in schema.items() if k != '$defs'}}
++        loop = AgentLoop(config, loop_logger, [submit_schema, spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
+         bounded_model(loop.model)
+         # AgentLoop measures its own elapsed time; subtract preflight/analysis/extraction
+         # so all stages share the Config total timeout, not a fresh per-stage allowance.

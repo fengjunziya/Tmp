@@ -1,0 +1,55 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -75,11 +75,24 @@
+         frame = folder / f'v{t.version}_{ms}.jpg'
+         execute([config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-ss', f'{ms/1000:.3f}', '-i', str(movie), '-frames:v', '1', '-q:v', '3', str(frame)], run_dir, f'frame_v{t.version}_{ms}', config.command_timeout_s)
+         frames.append({'time_ms': ms, 'path': str(frame)})
+-    title = next(c.text for c in t.captions if c.start_ms == 0)
+-    ending = next(c.text for c in t.captions if c.end_ms == duration)
++    title = next((c.text for c in t.captions if c.start_ms == 0), None)
++    ending = next((c.text for c in t.captions if c.end_ms == duration), None)
+     first = t.clips[0].kind
+-    content = [{'type': 'input_text', 'text': f'Inspect ONLY these frames sampled from the ACTUAL encoded movie. Title at 1000ms should visually read exactly {title!r}; ending at 9000ms should read exactly {ending!r}. First clip type is {first} (static image has DEMO_STILL; video has dynamic DEMO_01/02/03). Inspect first/last order. Return only JSON with booleans title_visible, ending_visible, order_visible and uncertainty; do not claim unobserved frames verified.'}]
+-    for ms in (1000, 9000, 100):
++    title_ms = min(1000, max(0, duration - 100))
++    ending_ms = max(0, duration - 1000)
++    instruction = ['Inspect ONLY these frames sampled from the ACTUAL encoded movie.']
++    if title is not None:
++        instruction.append(f'Title at {title_ms}ms should visually read exactly {title!r}.')
++    if ending is not None:
++        instruction.append(f'Ending near {ending_ms}ms should read exactly {ending!r}.')
++    instruction.append(f'First clip type is {first} (static image has DEMO_STILL; video has dynamic DEMO_01/02/03). Inspect first/last order. Return only JSON with booleans title_visible, ending_visible, order_visible and uncertainty; do not claim unobserved frames verified.')
++    content = [{'type': 'input_text', 'text': ' '.join(instruction)}]
++    wanted = [100]
++    if title is not None:
++        wanted.append(title_ms)
++    if ending is not None:
++        wanted.append(ending_ms)
++    for ms in dict.fromkeys(wanted):
+         frame = min(frames, key=lambda x: abs(x['time_ms']-ms))
+         content += [{'type': 'input_text', 'text': f"Movie timestamp {frame['time_ms']}ms evidence {frame['path']}"}, {'type': 'input_image', 'image_url': 'data:image/jpeg;base64,' + base64.b64encode(Path(frame['path']).read_bytes()).decode()}]
+     result = model.respond([{'role': 'user', 'content': content}], purpose='encoded_movie_visual_review').output_text
+@@ -87,14 +100,19 @@
+         observed = json.loads(result.strip().removeprefix('```json').removesuffix('```').strip())
+     except ValueError:
+         observed = {'uncertainty': result}
+-    for key in ('title_visible', 'ending_visible', 'order_visible'):
++    visual_keys = ['order_visible']
++    if title is not None:
++        visual_keys.append('title_visible')
++    if ending is not None:
++        visual_keys.append('ending_visible')
++    for key in visual_keys:
+         check('visual_'+key, observed.get(key) is True, observed, evidence=frames)
+     for req in requirements['hard_constraints']:
+         field = req['field']
+-        associated = ['video_stream', 'video_duration_ms', 'audio_stream', 'full_decode']
+-        if field.startswith('title_'):
++        associated = ['video_stream', 'video_duration_ms', 'audio_stream', 'audio_duration_ms', 'container_duration_ms', 'full_decode']
++        if field.startswith('title_') and title is not None:
+             associated += ['visual_title_visible']
+-        if field.startswith('ending_'):
++        if field.startswith('ending_') and ending is not None:
+             associated += ['visual_ending_visible']
+         if field == 'clip_order':
+             associated += ['visual_order_visible']

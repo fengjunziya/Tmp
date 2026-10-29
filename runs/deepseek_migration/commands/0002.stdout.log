@@ -1,0 +1,13 @@
+ AGENTS.md                   |   7 +++
+ agent_core.py               |  48 ++++++++++++++++-----
+ coding_agent.py             |   3 +-
+ config.example.json         |  12 ++++--
+ docs/requirements.md        |   8 +++-
+ media.py                    |  19 ++++++--
+ renderer.py                 |   9 +++-
+ scripts/preflight.py        |  39 ++++++++++-------
+ tasks/build_video_agent.txt |   2 +-
+ tests/test_agent_core.py    |  25 ++++++++---
+ timeline.py                 |  11 +++--
+ video_agent.py              | 103 ++++++++++++++++++++++++++++++++++----------
+ 12 files changed, 214 insertions(+), 72 deletions(-)

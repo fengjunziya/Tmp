@@ -1,0 +1,99 @@
+diff --git a/media.py b/media.py
+index 740cc4a..65f25b8 100644
+--- a/media.py
++++ b/media.py
+@@ -68,13 +68,26 @@ def frames(asset, root, run_dir, config, points, prefix):
+     return results
+ 
+ 
++def sampling_interval(config):
++    interval = getattr(config, 'sample_interval_ms', 2500)
++    if type(interval) is not int or not 2000 <= interval <= 5000:
++        raise ValueError('sample_interval_ms must be an integer between 2000 and 5000')
++    return interval
++
++
++def sample_points(asset, config):
++    if asset['kind'] != 'video':
++        return [0]
++    duration = asset['duration_ms']
++    interval = sampling_interval(config)
++    return sorted(set([*range(0, duration, interval), max(0, duration - 200)]))
++
++
+ def observe(asset, inventory_data, run_dir, config, model, points=None, prefix='sample'):
+     if asset['kind'] == 'audio':
+         return {'asset_id': asset['asset_id'], 'summary': 'Audio only; probe metadata, no visual evidence or semantic transcription.', 'observed_intervals': [], 'candidate_shots': [], 'evidence_frames': [], 'uncertainties': ['Audio semantics not transcribed']}
+     if points is None:
+-        duration = asset['duration_ms'] or 0
+-        points = [0, 2500, 5000, 7500, max(0, duration - 200)] if asset['kind'] == 'video' else [0]
+-        points = sorted(set(t for t in points if t < duration)) if asset['kind'] == 'video' else [0]
++        points = sample_points(asset, config)
+     samples = frames(asset, inventory_data['asset_root'], run_dir, config, points, prefix)
+     content = [{'type': 'input_text', 'text': f"Describe only what is actually visible in these sampled frames of {asset['relative_path']}; each frame is a point observation, not proof of intervening scenes. Return a short factual description, possible shot choices, and uncertainty."}]
+     for frame in samples:
+diff --git a/renderer.py b/renderer.py
+index 75e9307..12df131 100644
+--- a/renderer.py
++++ b/renderer.py
+@@ -1,6 +1,7 @@
+ """Compile validated data to a restricted FFmpeg graph; never accept arbitrary filters."""
+ import json
+ import html
++import re
+ import subprocess
+ import time
+ from pathlib import Path
+@@ -37,7 +38,11 @@ def render(t, report, inventory, config, run_dir):
+     run_dir = Path(run_dir).resolve()
+     length = report['computed_duration_ms']
+     srt = run_dir / f'captions_v{t.version}.srt'
+-    srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text.replace(chr(13), " ").replace(chr(10), " ").replace('-->', '→'), quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
++    for c in t.captions:
++        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
++            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
++    if t.captions:
++        srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text, quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
+     argv = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-filter_complex_threads', '1', '-y']
+     input_indices = []
+     n = 0
+@@ -75,7 +80,7 @@ def render(t, report, inventory, config, run_dir):
+             vf += f',fade=t=out:st={dur-c.transition_out.duration_ms/1000}:d={c.transition_out.duration_ms/1000}'
+         graph.append(vf + f'[v{i}]')
+         trim = f'atrim=start={c.in_ms/1000}:duration={dur}' if c.kind == 'video' and ai == vi else f'atrim=duration={dur}'
+-        af = f'[{ai}:a]{trim},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={"0" if c.mute else str(c.gain_db) + "dB"}'
++        af = f'[{ai}:a]{trim},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=duration={dur},volume={"0" if c.mute else str(c.gain_db) + "dB"}'
+         if c.transition_out.type == 'fade':
+             af += f',afade=t=out:st={dur-c.transition_out.duration_ms/1000}:d={c.transition_out.duration_ms/1000}'
+         graph.append(af + f'[a{i}]')
+diff --git a/timeline.py b/timeline.py
+index 1312aa7..46cdb20 100644
+--- a/timeline.py
++++ b/timeline.py
+@@ -1,4 +1,5 @@
+ """Strict editable timeline schema and source/constraint semantic checks."""
++import re
+ from typing import Literal
+ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+ 
+@@ -103,13 +104,17 @@ def check(data, inventory, requirements):
+     for c in t.captions:
+         if not c.text or c.end_ms <= c.start_ms or c.end_ms > elapsed:
+             raise ValueError(f'{c.caption_id}: caption outside movie')
++        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
++            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
+     if t.bgm:
+         a = assets.get(t.bgm.asset_id)
+-        if not a or a['kind'] != 'audio' or t.bgm.start_ms >= elapsed or t.bgm.in_ms >= a['duration_ms'] or (not t.bgm.loop and elapsed - t.bgm.start_ms > a['duration_ms'] - t.bgm.in_ms) or t.bgm.fade_in_ms + t.bgm.fade_out_ms > elapsed - t.bgm.start_ms:
++        if not a or a['kind'] != 'audio' or t.bgm.start_ms >= elapsed or t.bgm.in_ms >= a['duration_ms'] or t.bgm.fade_in_ms + t.bgm.fade_out_ms > elapsed - t.bgm.start_ms:
+             raise ValueError('BGM source/range/fades invalid')
++    title = next((c for c in t.captions if c.start_ms == 0), None)
++    ending = next((c for c in t.captions if c.end_ms == elapsed), None)
+     actual = {'duration_ms': elapsed, 'width': t.output.width, 'height': t.output.height, 'fps': t.output.fps, 'container': t.output.container, 'video_codec': t.output.video_codec, 'audio_codec': t.output.audio_codec,
+-              'clip_order': [c.kind for c in t.clips], 'title_text': next((c.text for c in t.captions if c.start_ms == 0), None), 'title_start_ms': 0, 'title_end_ms': next((c.end_ms for c in t.captions if c.start_ms == 0), None),
+-              'ending_text': next((c.text for c in t.captions if c.end_ms == elapsed), None), 'ending_start_ms': next((c.start_ms for c in t.captions if c.end_ms == elapsed), None), 'ending_end_ms': elapsed,
++              'clip_order': [c.kind for c in t.clips], 'title_text': title.text if title else None, 'title_start_ms': title.start_ms if title else None, 'title_end_ms': title.end_ms if title else None,
++              'ending_text': ending.text if ending else None, 'ending_start_ms': ending.start_ms if ending else None, 'ending_end_ms': ending.end_ms if ending else None,
+               'transition_type': t.clips[0].transition_out.type, 'transition_ms': t.clips[0].transition_out.duration_ms,
+               'video_gain_db': [c.gain_db for c in t.clips if c.kind == 'video'], 'video_mute': [c.mute for c in t.clips if c.kind == 'video'],
+               'bgm_gain_db': t.bgm.gain_db if t.bgm else None, 'bgm_fade_in_ms': t.bgm.fade_in_ms if t.bgm else None, 'bgm_fade_out_ms': t.bgm.fade_out_ms if t.bgm else None,

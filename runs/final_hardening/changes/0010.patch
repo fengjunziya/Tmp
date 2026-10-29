@@ -1,0 +1,20 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -143,11 +143,15 @@
+ 
+ def analyze(run_dir, inventory, client, config):
+     path = run_dir / 'analysis.json'
+-    previous = read(path) if path.exists() else {'assets': [], 'sampling': 'video point frames at 0, 2500, 5000, 7500, near end; no unseen intervals confirmed'}
++    previous = read(path) if path.exists() else {'assets': []}
+     cached = {row['asset_id']: row for row in previous['assets']}
+     rows = []
++    interval = media.sampling_interval(config)
++    sampling = {'interval_ms': interval, 'frame_width': 640, 'endpoint_offset_ms': 200,
++                'cache_version': 2, 'description': 'point samples across full video; unseen intervals unconfirmed'}
+     for a in inventory['assets']:
+-        key = hashlib.sha256((a['sha256'] + ':sampling-v1:0,2500,5000,7500,near-end:640').encode()).hexdigest()
++        key = hashlib.sha256(json.dumps({'sha256': a['sha256'], 'sampling': sampling,
++                                         'points': media.sample_points(a, config)}, sort_keys=True).encode()).hexdigest()
+         if a['asset_id'] in cached and cached[a['asset_id']].get('cache_key') == key:
+             rows.append(cached[a['asset_id']])
+         else:

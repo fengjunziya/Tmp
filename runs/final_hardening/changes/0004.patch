@@ -1,0 +1,12 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -201,6 +201,9 @@
+         if version == 1:
+             assets_path = run_dir / 'assets.json'
+             assets = read(assets_path) if assets_path.exists() else media.inventory(args.assets, config)
++            if Path(args.assets).resolve() != Path(assets['asset_root']).resolve():
++                raise ValueError('Cached assets belong to another source directory')
++            verify_sources(assets)
+             if not assets_path.exists():
+                 save(assets_path, assets)
+             analyze(run_dir, assets, client, config)

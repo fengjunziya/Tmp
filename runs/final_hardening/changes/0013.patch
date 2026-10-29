@@ -1,0 +1,11 @@
+--- a/D:\Tmp\timeline.py
++++ b/D:\Tmp\timeline.py
+@@ -104,6 +104,8 @@
+     for c in t.captions:
+         if not c.text or c.end_ms <= c.start_ms or c.end_ms > elapsed:
+             raise ValueError(f'{c.caption_id}: caption outside movie')
++        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
++            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
+     if t.bgm:
+         a = assets.get(t.bgm.asset_id)
+         if not a or a['kind'] != 'audio' or t.bgm.start_ms >= elapsed or t.bgm.in_ms >= a['duration_ms'] or (not t.bgm.loop and elapsed - t.bgm.start_ms > a['duration_ms'] - t.bgm.in_ms) or t.bgm.fade_in_ms + t.bgm.fade_out_ms > elapsed - t.bgm.start_ms:

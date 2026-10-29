@@ -29,6 +29,41 @@ def parse_response(text):
     return json.loads(text.strip().removeprefix('```json').removesuffix('```').strip())
 
 
+def verify_sources(assets):
+    for a in assets['assets']:
+        path = Path(assets['asset_root']) / a['relative_path']
+        if not path.is_file() or sha256_file(path) != a['sha256']:
+            raise ValueError(f'Source asset changed; frozen analysis invalid: {a["relative_path"]}')
+
+
+def ensure_provider_checkpoints(run_dir, config):
+    """Never resume/commingle planning checkpoints created under another provider."""
+    expected = {'model': config.model, 'api_base': config.api_base, 'credential_env': config.api_key_env}
+    for checkpoint in sorted(Path(run_dir).glob('agent_v*/checkpoint.json')):
+        state = read(checkpoint)
+        if state.get('runtime_config') != expected:
+            raise ValueError(f'{checkpoint} was created by a legacy/different provider; use a new run directory after migration')
+
+
+def completed_matches(run_dir, version, raw, assets):
+    req = read(run_dir / f'requirements_v{version}.json')
+    if req['raw_text'] != raw:
+        raise ValueError('Completed version belongs to a different request')
+    verify_sources(assets)
+    t, derived = timeline.check(read(run_dir / f'timeline_v{version}.json'), assets, req)
+    stored = read(run_dir / f'derived_v{version}.json')
+    if derived != stored or t.asset_manifest_hash != assets['manifest_hash']:
+        raise ValueError('Completed timeline/derived result changed')
+    validation = read(run_dir / f'validation_v{version}.json')
+    if validation['status'] != 'pass':
+        raise ValueError('Completed version has no passing validation')
+    output = run_dir / f'output_v{version}.mp4'
+    recorded = next((x['sha256'] for x in read(run_dir / 'manifest.json')['files']
+                     if x['path'] == output.name), None)
+    if recorded is None or sha256_file(output) != recorded:
+        raise ValueError('Completed video differs from published manifest')
+
+
 def requirements(run_dir, version, raw, client):
     path = run_dir / f'requirements_v{version}.json'
     if path.exists():
@@ -37,28 +72,45 @@ def requirements(run_dir, version, raw, client):
             raise ValueError('Frozen requirement baseline cannot be changed')
         return previous
     parent = read(run_dir / 'requirements_v1.json') if version == 2 else None
+    instruction = ('Return JSON ONLY. Supported constraint fields: ' + ', '.join(FIELDS) + '. '
+                   'Extract ONLY constraints explicitly requested in this text, never fill every field or invent captions/music. '
+                   'Use milliseconds, gain dB numbers, codec libx264 for H.264, mp4, AAC, clip_order list of video/image. '
+                   'For derived times explicitly requested as "last N seconds", use explicitly specified total duration if available; otherwise report needs_review rather than inventing a time. '
+                   'Every constraint needs an exact verbatim substring of THIS request as source_text; include all unsupported or ambiguous requirements in unsupported_requirements with original wording. '
+                   'Selecting source intervals, providing assets and mixing a supplied BGM are operational instructions supported by the renderer, not unsupported fields. '
+                   'If automatic dialogue transcription is requested, set dialogue_transcription_requested true. ')
     if version == 1:
-        prompt = ('Extract ALL formal constraints from the user request as JSON ONLY: {"hard_constraints":[{"field":"...","expected":...,"source_text":"verbatim substring from request"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
-                  'Exactly one item for EACH field: ' + ', '.join(FIELDS) + '. Units ms, gain dB numeric, clip_order list ["video","image"] etc; codec expected libx264 for H.264, container mp4. ending_start_ms is derived from final two seconds, ending_end_ms from total. Video mute is false when keeping source audio. fit is pad. The named demo assets, selecting a mathematically correct source interval, and adding the supplied BGM are IMPLEMENTED operational requirements, NOT unsupported. List only truly impossible formal features in unsupported_requirements; do not list normal production instructions there. Source citation must occur verbatim in request.\nREQUEST:\n' + raw)
+        prompt = instruction + ('Format: {"hard_constraints":[{"field":"...","expected":...,"source_text":"..."}],'
+                                '"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+                                'Unrequested fields use declared output defaults during planning (not frozen hard requirements).\nREQUEST:\n' + raw)
         parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_frozen_requirements').output_text)
         rows = parsed['hard_constraints']
-        if len(rows) != len(FIELDS) or {r['field'] for r in rows} != set(FIELDS):
-            raise ValueError('Model extraction omitted/duplicated a formal field')
-        hard = [{'requirement_id': f'R1_{r["field"]}', 'field': r['field'], 'expected': r['expected'], 'source_text': r['source_text']} for r in rows]
         superseded = []
+        hard = [{'requirement_id': f'R1_{r["field"]}', 'field': r['field'], 'expected': r['expected'], 'source_text': r['source_text']} for r in rows]
     else:
-        prompt = ('Compare new revision to frozen baseline. Output JSON ONLY: {"changes":[{"field":"title_text or clip_order","expected":...,"source_text":"exact verbatim quote","reason":"why explicitly replaced"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
-                  'Only explicitly overridden constraints may change; preserve every other baseline field. A reversal of order explicitly replaces clip_order. Title change explicitly replaces title_text, title timing remains unchanged. No invented captions.\nBASELINE:\n' + json.dumps(parent['hard_constraints'], ensure_ascii=False) + '\nNEW REQUEST:\n' + raw)
+        prompt = instruction + ('Format: {"changes":[{"field":"...","expected":...,"source_text":"...","reason":"why explicitly added or replaced"}],'
+                                '"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+                                'Return only explicit new/different constraints; statements keeping old values are NOT changes. '
+                                'Any supported field may be added or replaced. Preserve all other baseline constraints.\nBASELINE:\n'
+                                + json.dumps(parent['hard_constraints'], ensure_ascii=False) + '\nNEW REQUEST:\n' + raw)
         parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_revision_changes').output_text)
         changes = parsed['changes']
-        if {x['field'] for x in changes} != {'title_text', 'clip_order'} or len(changes) != 2:
-            raise ValueError('Revision needs explicit title and order replacements; other changes require review')
-        hard = [dict(r) for r in parent['hard_constraints'] if r['field'] not in ('title_text', 'clip_order')]
+        old_by_field = {r['field']: r for r in parent['hard_constraints']}
+        hard = [dict(r) for r in parent['hard_constraints'] if r['field'] not in {x['field'] for x in changes}]
         superseded = []
         for change in changes:
-            old = next(r for r in parent['hard_constraints'] if r['field'] == change['field'])
-            superseded.append({'requirement_id': old['requirement_id'], 'field': change['field'], 'reason': change['reason'], 'source_text': change['source_text']})
-            hard.append({'requirement_id': f'R2_{change["field"]}', 'field': change['field'], 'expected': change['expected'], 'source_text': change['source_text']})
+            if not isinstance(change.get('reason'), str) or not change['reason'].strip():
+                raise ValueError('Each revision change requires a reason')
+            old = old_by_field.get(change['field'])
+            if old:
+                if old['expected'] == change['expected']:
+                    raise ValueError(f'Unchanged constraint is not a revision: {change["field"]}')
+                superseded.append({'requirement_id': old['requirement_id'], 'field': change['field'], 'reason': change['reason'], 'source_text': change['source_text']})
+            hard.append({'requirement_id': f'R2_{change["field"]}', 'field': change['field'], 'expected': change['expected'], 'source_text': change['source_text'], 'reason': change['reason']})
+    extracted = rows if version == 1 else changes
+    fields = [r['field'] for r in extracted]
+    if len(fields) != len(set(fields)) or any(f not in FIELDS for f in fields):
+        raise ValueError(f'Duplicate or unsupported constraint fields need review: {fields}')
     for r in hard:
         source = r['source_text']
         if not isinstance(source, str) or not source or source not in (raw if r['requirement_id'].startswith('R2_') or version == 1 else parent['raw_text']):
@@ -100,11 +152,15 @@ def spec(name, props, required=None):
 
 def analyze(run_dir, inventory, client, config):
     path = run_dir / 'analysis.json'
-    previous = read(path) if path.exists() else {'assets': [], 'sampling': 'video point frames at 0, 2500, 5000, 7500, near end; no unseen intervals confirmed'}
+    previous = read(path) if path.exists() else {'assets': []}
     cached = {row['asset_id']: row for row in previous['assets']}
     rows = []
+    interval = media.sampling_interval(config)
+    sampling = {'interval_ms': interval, 'frame_width': 640, 'endpoint_offset_ms': 200,
+                'cache_version': 2, 'description': 'point samples across full video; unseen intervals unconfirmed'}
     for a in inventory['assets']:
-        key = hashlib.sha256((a['sha256'] + ':sampling-v1:0,2500,5000,7500,near-end:640').encode()).hexdigest()
+        key = hashlib.sha256(json.dumps({'sha256': a['sha256'], 'sampling': sampling,
+                                         'points': media.sample_points(a, config)}, sort_keys=True).encode()).hexdigest()
         if a['asset_id'] in cached and cached[a['asset_id']].get('cache_key') == key:
             rows.append(cached[a['asset_id']])
         else:
@@ -112,7 +168,7 @@ def analyze(run_dir, inventory, client, config):
             obs['cache_key'] = key
             rows.append(obs)
             save(path, {**previous, 'assets': rows + [cached[x['asset_id']] for x in inventory['assets'] if x['asset_id'] in cached and x['asset_id'] not in {z['asset_id'] for z in rows}]})
-    result = {**previous, 'assets': rows, 'asset_manifest_hash': inventory['manifest_hash']}
+    result = {**previous, 'assets': rows, 'sampling': sampling, 'asset_manifest_hash': inventory['manifest_hash']}
     save(path, result)
     return result
 
@@ -135,9 +191,14 @@ def run(version, args):
     deadline = started + config.total_timeout_s
     try:
         output = run_dir / f'output_v{version}.mp4'
-        if output.exists() and read(run_dir / f'validation_v{version}.json')['status'] == 'pass':
-            logger.event('already_completed', output=str(output))
+        if output.exists():
+            assets = read(run_dir / 'assets.json')
+            if version == 1 and Path(args.assets).resolve() != Path(assets['asset_root']).resolve():
+                raise ValueError('Completed version belongs to different source assets')
+            completed_matches(run_dir, version, request, assets)
+            logger.event('already_completed', output=str(output), verified_request_and_sources=True)
             return
+        ensure_provider_checkpoints(run_dir, config)
         client = ModelClient(config, logger)
         model_calls = [0]
         def bounded_model(model):
@@ -154,6 +215,9 @@ def run(version, args):
         if version == 1:
             assets_path = run_dir / 'assets.json'
             assets = read(assets_path) if assets_path.exists() else media.inventory(args.assets, config)
+            if Path(args.assets).resolve() != Path(assets['asset_root']).resolve():
+                raise ValueError('Cached assets belong to another source directory')
+            verify_sources(assets)
             if not assets_path.exists():
                 save(assets_path, assets)
             analyze(run_dir, assets, client, config)
@@ -161,9 +225,7 @@ def run(version, args):
             if not (run_dir / 'output_v1.mp4').exists() or read(run_dir / 'validation_v1.json')['status'] != 'pass':
                 raise ValueError('Revision requires a published passing v1')
             assets = read(run_dir / 'assets.json')
-            for a in assets['assets']:
-                if sha256_file(Path(assets['asset_root']) / a['relative_path']) != a['sha256']:
-                    raise ValueError('Source asset changed; frozen analysis invalid')
+            verify_sources(assets)
             analyze(run_dir, assets, client, config)
         req = requirements(run_dir, version, request, client)
         loop_dir = run_dir / f'agent_v{version}'
@@ -173,7 +235,12 @@ def run(version, args):
             loop_dir = run_dir / f'agent_v{version}_retry{retry_number}'
         loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
         logger.event('planning_attempt', path=str(loop_dir), prior_attempt_preserved=retry_number > 0)
-        loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
+        config.max_turns = min(config.max_turns, 20)
+        schema = timeline.Timeline.model_json_schema()
+        # JSON Schema $defs must be at the root for local $ref resolution.
+        submit_schema = spec('submit_timeline', {'timeline': {'$ref': '#/$defs/Timeline'}}, ['timeline'])
+        submit_schema['parameters']['$defs'] = {**schema.get('$defs', {}), 'Timeline': {k: v for k, v in schema.items() if k != '$defs'}}
+        loop = AgentLoop(config, loop_logger, [submit_schema, spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
         bounded_model(loop.model)
         # AgentLoop measures its own elapsed time; subtract preflight/analysis/extraction
         # so all stages share the Config total timeout, not a fresh per-stage allowance.
@@ -231,8 +298,8 @@ def run(version, args):
             logger.event('published', path=str(output), sha256=sha256_file(output))
             return {'ok': True, 'accepted': True, 'output': str(output), 'validation': f'validation_v{version}.json'}
         loop.handlers = {'submit_timeline': submit_timeline, 'inspect_interval': inspect_interval, 'render': render, 'verify': verify, 'finish': finish}
-        task = ('Plan, validate, render, verify, then finish version ' + str(version) + '. Frozen requirements: ' + json.dumps(req, ensure_ascii=False) + '\nAssets: ' + json.dumps(assets, ensure_ascii=False) + '\nObservations: ' + json.dumps(read(run_dir/'analysis.json'), ensure_ascii=False) + '\nVersion 1 example feasible math: 7000ms video + 3500ms image - 500ms dissolve = 10000ms. Version 2 can use image 3500ms then video 7000ms; choose actual content based on evidence. These durations are suggestions, NOT superseding request. For each clip provide all nullable fields; final transition cut 0. BGM from audio asset. All captions are provided copy, not ASR. Submit full JSON timeline with schema_version 1.0, version, parent_version, request_ids, asset_manifest_hash, constraint_set_id, output, clips, captions, bgm. Use tools; text-only answer does not finish.')
-        system = 'You are the video editing planner on gpt-6-sol/high. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
+        task = ('Plan, validate, render, verify, then finish version ' + str(version) + '. Full timeline JSON Schema: ' + json.dumps(schema, ensure_ascii=False) + '. Unrequested output fields default to config.output=' + json.dumps(config.output) + ', container=mp4, video_codec=libx264, audio_codec=aac; do not invent captions or BGM unless requested. Frozen requirements: ' + json.dumps(req, ensure_ascii=False) + '\nAssets: ' + json.dumps(assets, ensure_ascii=False) + '\nObservations: ' + json.dumps(read(run_dir/'analysis.json'), ensure_ascii=False) + '\nVersion 1 example feasible math: 7000ms video + 3500ms image - 500ms dissolve = 10000ms. Version 2 can use image 3500ms then video 7000ms; choose actual content based on evidence. These durations are suggestions, NOT superseding request. For each clip provide all nullable fields; final transition cut 0. BGM from audio asset. All captions are provided copy, not ASR. Submit full JSON timeline with schema_version 1.0, version, parent_version, request_ids, asset_manifest_hash, constraint_set_id, output, clips, captions, bgm. Use tools; text-only answer does not finish.')
+        system = f'You are the video editing planner on {config.model}/{config.reasoning_effort}. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
         result = loop.run(task, system_prompt=system)
         logger.event('planning_result', result=result)
         top_usage = read(run_dir / 'usage.json')

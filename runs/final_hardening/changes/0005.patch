@@ -1,0 +1,13 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -211,9 +211,7 @@
+             if not (run_dir / 'output_v1.mp4').exists() or read(run_dir / 'validation_v1.json')['status'] != 'pass':
+                 raise ValueError('Revision requires a published passing v1')
+             assets = read(run_dir / 'assets.json')
+-            for a in assets['assets']:
+-                if sha256_file(Path(assets['asset_root']) / a['relative_path']) != a['sha256']:
+-                    raise ValueError('Source asset changed; frozen analysis invalid')
++            verify_sources(assets)
+             analyze(run_dir, assets, client, config)
+         req = requirements(run_dir, version, request, client)
+         loop_dir = run_dir / f'agent_v{version}'

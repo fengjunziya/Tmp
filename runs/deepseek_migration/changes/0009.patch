@@ -1,0 +1,11 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -117,7 +117,7 @@
+         if field == 'clip_order':
+             associated += ['visual_order_visible']
+         if field in ('bgm_gain_db', 'video_gain_db', 'video_mute', 'bgm_fade_in_ms', 'bgm_fade_out_ms'):
+-            evidence = {'validated_timeline': f'timeline_v{t.version}.json', 'controlled_source_graph': 'commands/*render*.argv.json', 'decoded_audio': bool(audio)}
++            evidence = {'validated_timeline': f'timeline_v{t.version}.json', 'controlled_source_graph': 'commands/*render*.argv.json', 'decoded_audio': bool(audio), 'duration_check': coverage}
+         else:
+             evidence = {'timeline_semantic_check': next(c for c in derived['constraint_checks'] if c['requirement_id'] == req['requirement_id']), 'movie_frames': frames if field in ('clip_order', 'title_text', 'ending_text') else []}
+         check('hard_'+req['requirement_id'], all(next(c for c in checks if c['check_id'] == n)['status'] == 'pass' for n in associated), {'field': field, 'expected': req['expected']}, req['requirement_id'], evidence)

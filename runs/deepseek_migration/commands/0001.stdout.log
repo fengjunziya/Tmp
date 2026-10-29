@@ -1,0 +1,21 @@
+ M AGENTS.md
+ M agent_core.py
+ M coding_agent.py
+ M config.example.json
+ M docs/requirements.md
+ M media.py
+ M renderer.py
+ M scripts/preflight.py
+ M tasks/build_video_agent.txt
+ M tests/test_agent_core.py
+ M timeline.py
+ M video_agent.py
+?? reports/deepseek_migration_acceptance.json
+?? reports/env_check_deepseek.json
+?? reports/env_check_deepseek_initial.json
+?? reports/model_probe_deepseek/
+?? runs/deepseek_migration/
+?? runs/final_hardening/
+?? scripts/summarize_delivery.py
+?? tasks/finish_video_agent.txt
+?? tasks/migrate_deepseek.txt

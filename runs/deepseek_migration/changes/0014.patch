@@ -1,0 +1,33 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -7,13 +7,24 @@
+ 
+ 
+ def stream_duration_ms(stream, info):
+-    value = stream.get('duration') if stream else None
+-    if stream is not None and value in (None, 'N/A'):
+-        value = info.get('format', {}).get('duration')
+-    try:
+-        return round(float(value) * 1000)
+-    except (TypeError, ValueError):
++    if not stream:
+         return None
++    value = stream.get('duration')
++    if value not in (None, 'N/A'):
++        try:
++            return round(float(value) * 1000)
++        except (TypeError, ValueError):
++            return None
++    duration_ts = stream.get('duration_ts')
++    time_base = stream.get('time_base')
++    if duration_ts is not None and time_base and '/' in str(time_base):
++        try:
++            numerator, denominator = (int(part) for part in str(time_base).split('/', 1))
++            if denominator:
++                return round(int(duration_ts) * numerator * 1000 / denominator)
++        except (TypeError, ValueError):
++            return None
++    return None
+ 
+ 
+ def media_duration_checks(info, expected_ms, fps):

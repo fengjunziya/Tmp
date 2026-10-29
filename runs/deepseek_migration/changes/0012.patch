@@ -1,0 +1,11 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -8,7 +8,7 @@
+ 
+ def stream_duration_ms(stream, info):
+     value = stream.get('duration') if stream else None
+-    if value in (None, 'N/A'):
++    if stream is not None and value in (None, 'N/A'):
+         value = info.get('format', {}).get('duration')
+     try:
+         return round(float(value) * 1000)

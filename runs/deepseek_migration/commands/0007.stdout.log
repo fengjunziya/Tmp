@@ -1,0 +1,8 @@
+video_agent.py [(292, "system = 'You are the video editing planner on gpt-6-sol/high. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'")]
+media.py []
+timeline.py []
+renderer.py []
+verify.py []
+coding_agent.py [(152, 'env={k: v for k, v in os.environ.items() if not k.upper().startswith("OPENAI_")},')]
+agent_core.py [(250, '# API key or OPENAI_BASE_URL from the surrounding desktop environment.'), (252, 'self.client = OpenAI(**options)')]
+scripts/preflight.py []

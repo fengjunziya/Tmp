@@ -1,0 +1,35 @@
+{
+  "recorded_at": "2026-10-29T07:05:30.057116+00:00",
+  "user_requested_name": "deepeek-flash",
+  "resolved_official_model_id": "deepseek-flash",
+  "provider": "deepseek",
+  "api_base": "https://api.deepseek.com",
+  "credential_env": "DEEPSEEK_API_KEY",
+  "openai_credentials_authorized": false,
+  "fallback_enabled": false,
+  "official_documentation": "https://api-docs.deepseek.com/guides/responses_api/",
+  "capability_probe": "reports/env_check_deepseek.json",
+  "migration_run": "runs/deepseek_migration",
+  "historical_runs_preserved": [
+    "runs/stage_a",
+    "runs/build_video",
+    "runs/final_hardening",
+    "runs/demo"
+  ],
+  "historical_video_provider": "openai",
+  "historical_videos_not_rerendered": true,
+  "operator_actions": [
+    "Stopped prior final_hardening process tree before provider change; no intentional OpenAI requests after user prohibition.",
+    "Primary developer changed shared API adapter, configuration, preflight, instruction prompts and credential guard tests.",
+    "Business prompt/source follow-up delegated to project Coding Agent through deepseek-flash and DEEPSEEK_API_KEY in a new run directory."
+  ],
+  "status": "completed",
+  "completed_at": "2026-10-29T07:13:30.953993+00:00",
+  "migration_model_calls": 45,
+  "migration_models": [
+    "deepseek-flash"
+  ],
+  "result_path": "runs/deepseek_migration/result.json",
+  "credential_isolation": "reports/credential_isolation.json",
+  "official_pricing_reference": "https://api-docs.deepseek.com/quick_start/pricing/"
+}

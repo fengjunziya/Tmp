@@ -1,0 +1,137 @@
+"""Strict editable timeline schema and source/constraint semantic checks."""
+import re
+from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+
+
+class Strict(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+
+class Output(Strict):
+    width: StrictInt = Field(gt=0)
+    height: StrictInt = Field(gt=0)
+    fps: StrictInt = Field(gt=0)
+    container: Literal['mp4']
+    video_codec: Literal['libx264']
+    audio_codec: Literal['aac']
+
+
+class Transition(Strict):
+    type: Literal['cut', 'fade', 'dissolve']
+    duration_ms: StrictInt = Field(ge=0)
+
+
+class Clip(Strict):
+    clip_id: str
+    asset_id: str
+    kind: Literal['video', 'image']
+    in_ms: StrictInt | None
+    out_ms: StrictInt | None
+    duration_ms: StrictInt | None
+    fit: Literal['pad', 'crop']
+    mute: bool
+    gain_db: float
+    transition_out: Transition
+
+
+class Caption(Strict):
+    caption_id: str
+    start_ms: StrictInt = Field(ge=0)
+    end_ms: StrictInt = Field(ge=0)
+    text: str
+    style_id: Literal['default_zh']
+
+
+class BGM(Strict):
+    asset_id: str
+    in_ms: StrictInt = Field(ge=0)
+    start_ms: StrictInt = Field(ge=0)
+    gain_db: float
+    loop: bool
+    fade_in_ms: StrictInt = Field(ge=0)
+    fade_out_ms: StrictInt = Field(ge=0)
+
+
+class Timeline(Strict):
+    schema_version: Literal['1.0']
+    version: StrictInt = Field(gt=0)
+    parent_version: StrictInt | None
+    request_ids: list[str]
+    asset_manifest_hash: str
+    constraint_set_id: str
+    output: Output
+    clips: list[Clip]
+    captions: list[Caption]
+    bgm: BGM | None
+
+
+def check(data, inventory, requirements):
+    t = Timeline.model_validate(data)
+    assets = {a['asset_id']: a for a in inventory['assets']}
+    if t.asset_manifest_hash != inventory['manifest_hash'] or t.constraint_set_id != requirements['constraint_set_id']:
+        raise ValueError('Asset/constraint hash mismatch')
+    if t.version != requirements['version'] or t.parent_version != (t.version - 1 if t.version > 1 else None):
+        raise ValueError('Incorrect revision lineage')
+    if t.request_ids != requirements['request_ids']:
+        raise ValueError('Request lineage mismatch')
+    if not t.clips or len({c.clip_id for c in t.clips}) != len(t.clips) or len({c.caption_id for c in t.captions}) != len(t.captions):
+        raise ValueError('Missing clips or duplicate IDs')
+    positions, elapsed, prev_overlap = [], 0, 0
+    for i, c in enumerate(t.clips):
+        a = assets.get(c.asset_id)
+        if a is None or a['kind'] != c.kind:
+            raise ValueError(f'{c.clip_id}: invalid video/image asset')
+        if c.kind == 'video':
+            if c.in_ms is None or c.out_ms is None or c.duration_ms is not None or c.in_ms < 0 or c.out_ms <= c.in_ms or c.out_ms > a['duration_ms']:
+                raise ValueError(f'{c.clip_id}: video source interval invalid')
+            length = c.out_ms - c.in_ms
+        else:
+            if c.in_ms is not None or c.out_ms is not None or c.duration_ms is None or c.duration_ms <= 0:
+                raise ValueError(f'{c.clip_id}: image duration/source invalid')
+            length = c.duration_ms
+        tr = c.transition_out
+        if (tr.type == 'cut' and tr.duration_ms != 0) or (tr.type != 'cut' and (tr.duration_ms <= 0 or tr.duration_ms >= length)):
+            raise ValueError(f'{c.clip_id}: transition duration invalid')
+        if i == len(t.clips) - 1 and tr.type == 'dissolve':
+            raise ValueError('Last clip cannot dissolve')
+        if prev_overlap + (tr.duration_ms if tr.type == 'dissolve' else 0) > length:
+            raise ValueError('Neighboring dissolve overlaps exceed clip length')
+        start = elapsed - prev_overlap
+        positions.append({'clip_id': c.clip_id, 'start_ms': start, 'end_ms': start + length})
+        elapsed = start + length
+        prev_overlap = tr.duration_ms if tr.type == 'dissolve' else 0
+    for c in t.captions:
+        if not c.text or c.end_ms <= c.start_ms or c.end_ms > elapsed:
+            raise ValueError(f'{c.caption_id}: caption outside movie')
+        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
+            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
+    if t.bgm:
+        a = assets.get(t.bgm.asset_id)
+        if not a or a['kind'] != 'audio' or t.bgm.start_ms >= elapsed or t.bgm.in_ms >= a['duration_ms'] or t.bgm.fade_in_ms + t.bgm.fade_out_ms > elapsed - t.bgm.start_ms:
+            raise ValueError('BGM source/range/fades invalid')
+    actual = {'duration_ms': elapsed, 'width': t.output.width, 'height': t.output.height, 'fps': t.output.fps, 'container': t.output.container, 'video_codec': t.output.video_codec, 'audio_codec': t.output.audio_codec,
+              'clip_order': [c.kind for c in t.clips], 'title_text': next((c.text for c in t.captions if c.start_ms == 0), None), 'title_start_ms': 0, 'title_end_ms': next((c.end_ms for c in t.captions if c.start_ms == 0), None),
+              'ending_text': next((c.text for c in t.captions if c.end_ms == elapsed), None), 'ending_start_ms': next((c.start_ms for c in t.captions if c.end_ms == elapsed), None), 'ending_end_ms': elapsed,
+              'transition_type': t.clips[0].transition_out.type, 'transition_ms': t.clips[0].transition_out.duration_ms,
+              'video_gain_db': [c.gain_db for c in t.clips if c.kind == 'video'], 'video_mute': [c.mute for c in t.clips if c.kind == 'video'],
+              'bgm_gain_db': t.bgm.gain_db if t.bgm else None, 'bgm_fade_in_ms': t.bgm.fade_in_ms if t.bgm else None, 'bgm_fade_out_ms': t.bgm.fade_out_ms if t.bgm else None,
+              'fit': [c.fit for c in t.clips]}
+    failures = []
+    for req in requirements['hard_constraints']:
+        key, expected = req['field'], req['expected']
+        got = actual.get(key)
+        if key == 'transition_type' and expected == 'cross_dissolve':
+            # Requirements retain the natural-language semantic label; the wire schema calls this dissolve.
+            good = got == 'dissolve'
+        elif key in ('video_gain_db', 'video_mute', 'fit'):
+            good = bool(got) and all(x == expected for x in got)
+        elif key == 'clip_order':
+            good = got == expected
+        else:
+            good = got == expected
+        if not good:
+            failures.append({'requirement_id': req['requirement_id'], 'field': key, 'expected': expected, 'actual': got})
+    if failures:
+        raise ValueError(f'Hard constraint violations: {failures}')
+    return t, {'computed_duration_ms': elapsed, 'clip_positions': positions, 'constraint_checks': [{'requirement_id': x['requirement_id'], 'field': x['field'], 'actual': actual[x['field']], 'status': 'pass'} for x in requirements['hard_constraints']]}

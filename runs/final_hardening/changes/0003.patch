@@ -1,0 +1,17 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -178,8 +178,12 @@
+     deadline = started + config.total_timeout_s
+     try:
+         output = run_dir / f'output_v{version}.mp4'
+-        if output.exists() and read(run_dir / f'validation_v{version}.json')['status'] == 'pass':
+-            logger.event('already_completed', output=str(output))
++        if output.exists():
++            assets = read(run_dir / 'assets.json')
++            if version == 1 and Path(args.assets).resolve() != Path(assets['asset_root']).resolve():
++                raise ValueError('Completed version belongs to different source assets')
++            completed_matches(run_dir, version, request, assets)
++            logger.event('already_completed', output=str(output), verified_request_and_sources=True)
+             return
+         client = ModelClient(config, logger)
+         model_calls = [0]

@@ -1,0 +1,11 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -159,7 +159,7 @@
+             obs['cache_key'] = key
+             rows.append(obs)
+             save(path, {**previous, 'assets': rows + [cached[x['asset_id']] for x in inventory['assets'] if x['asset_id'] in cached and x['asset_id'] not in {z['asset_id'] for z in rows}]})
+-    result = {**previous, 'assets': rows, 'asset_manifest_hash': inventory['manifest_hash']}
++    result = {**previous, 'assets': rows, 'sampling': sampling, 'asset_manifest_hash': inventory['manifest_hash']}
+     save(path, result)
+     return result
+ 

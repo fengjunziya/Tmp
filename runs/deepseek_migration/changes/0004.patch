@@ -1,0 +1,23 @@
+--- a/D:\Tmp\renderer.py
++++ b/D:\Tmp\renderer.py
+@@ -99,11 +99,17 @@
+     if t.bgm:
+         bgm = t.bgm
+         remaining = (length - bgm.start_ms) / 1000
+-        graph.append(f'[{bgm_idx}:a]atrim=start={bgm.in_ms/1000}:duration={remaining},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={bgm.gain_db}dB,afade=t=in:st=0:d={bgm.fade_in_ms/1000},afade=t=out:st={(length-bgm.start_ms-bgm.fade_out_ms)/1000}:d={bgm.fade_out_ms/1000},adelay={bgm.start_ms}|{bgm.start_ms}[music]')
+-        graph.append(f'[{aa}][music]amix=inputs=2:duration=first:normalize=0,atrim=duration={length/1000}[mixed]')
++        graph.append(f'[{bgm_idx}:a]atrim=start={bgm.in_ms/1000}:duration={remaining},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=duration={remaining},volume={bgm.gain_db}dB,afade=t=in:st=0:d={bgm.fade_in_ms/1000},afade=t=out:st={(length-bgm.start_ms-bgm.fade_out_ms)/1000}:d={bgm.fade_out_ms/1000},adelay={bgm.start_ms}|{bgm.start_ms}[music]')
++        graph.append(f'[{aa}][music]amix=inputs=2:duration=longest:normalize=0[mixed]')
+         aa = 'mixed'
++    # Pad every audio branch before the final trim: a short BGM/source or AAC
++    # encoder delay must not leave the computed movie duration without audio.
++    graph.append(f'[{aa}]apad,atrim=duration={length/1000}[finala]')
+     # cwd relative SRT avoids Windows drive-letter colon escaping in filter expressions.
+-    graph.append(f"[{vv}]subtitles=filename='{srt.name}':force_style='FontName=Microsoft YaHei,FontSize=40,Alignment=2,MarginV=52'[finalv]")
++    if t.captions:
++        graph.append(f"[{vv}]subtitles=filename='{srt.name}':force_style='FontName=Microsoft YaHei,FontSize=40,Alignment=2,MarginV=52'[finalv]")
++    else:
++        graph.append(f'[{vv}]null[finalv]')
+     pending = run_dir / f'output_v{t.version}.pending.mp4'
+     argv += ['-filter_complex', ';'.join(graph), '-map', '[finalv]', '-map', f'[{aa}]', '-t', str(length/1000), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-r', str(fps), '-c:a', 'aac', '-ar', '48000', '-ac', '2', '-b:a', '128k', '-movflags', '+faststart', str(pending)]
+     execute(argv, run_dir, f'render_v{t.version}', config.command_timeout_s)

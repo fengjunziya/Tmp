@@ -1,0 +1,73 @@
+{
+  "status": "completed",
+  "ok": true,
+  "turns": 45,
+  "finish": {
+    "ok": true,
+    "accepted": true,
+    "summary": "已完成迁移后的业务源码收尾，未运行 create/revise、未重新渲染或修改 runs/demo 两版历史成片与原 validation。\n\n修改内容：\n- video_agent.py：策划系统提示改为读取 config.model/config.reasoning_effort；新增旧/异构提供商 checkpoint 拒绝逻辑，避免跨提供商恢复；业务模型请求仍统一走共享 ModelClient/AgentLoop，无 OPENAI_API_KEY 或默认 OpenAI 客户端入口。\n- renderer.py：保留每镜头音频先补足再裁到片段；BGM 也先补足/裁剪；最终混音统一 `apad,atrim` 到计算片长；无字幕时跳过 SRT 烧录，不再强制 subtitles 滤镜。\n- verify.py：新增音频流实际覆盖长度与容器时长检查（不只检查 AAC）；无片头/片尾字幕时不再对 captions 调用无默认值的 next()；字幕控制序列明确拒绝。按追加指令将容差修正为 max(100 ms, 2000/fps)。\n- timeline.py/media.py：保留此前未提交的采样与字幕/时间线加固修改。\n- tests/test_video.py：2 个定向测试，mock 需求提取验证“仅改 BGM 音量仍保留旧标题/顺序”，并用真实 ffprobe 数据验证短音轨/缺失音轨被生产函数拒绝。\n- README.md：更新 DEEPSEEK_API_KEY、deepseek-flash、high、官方 https://api.deepseek.com Responses API、无 OpenAI 凭据回退、新运行目录示例、预检 reports/env_check_deepseek.json；明确 runs/demo 为迁移前历史结果、本次未重渲染、历史与费用按提供商分开统计、ASR 未配置失败、正常速度基础效果及 v1→v2 限制。\n\n已通过（修复前及本轮独立前）：5 文件 py_compile、tests/test_video.py、scripts/accept_video.py（只读既有两版）。未做 Git 提交；未进行新的 DeepSeek 视频渲染，因此不将 runs/demo 标为 DeepSeek 成果。",
+    "checks": [
+      {
+        "ok": true,
+        "argv": [
+          "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+          "-m",
+          "py_compile",
+          "video_agent.py",
+          "media.py",
+          "timeline.py",
+          "renderer.py",
+          "verify.py"
+        ],
+        "cwd": "D:\\Tmp",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 0.098,
+        "stdout": "",
+        "stderr": "",
+        "stdout_path": "D:\\Tmp\\runs\\deepseek_migration\\commands\\0023.stdout.log",
+        "stderr_path": "D:\\Tmp\\runs\\deepseek_migration\\commands\\0023.stderr.log"
+      },
+      {
+        "ok": true,
+        "argv": [
+          "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-p",
+          "test_video.py"
+        ],
+        "cwd": "D:\\Tmp",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 0.868,
+        "stdout": "",
+        "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.055s\r\n\r\nOK\r\n",
+        "stdout_path": "D:\\Tmp\\runs\\deepseek_migration\\commands\\0024.stdout.log",
+        "stderr_path": "D:\\Tmp\\runs\\deepseek_migration\\commands\\0024.stderr.log"
+      },
+      {
+        "ok": true,
+        "argv": [
+          "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+          "scripts/accept_video.py"
+        ],
+        "cwd": "D:\\Tmp",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 0.201,
+        "stdout": "VIDEO_DEMO_ACCEPTED: two independently checked 10s revisions\r\n",
+        "stderr": "",
+        "stdout_path": "D:\\Tmp\\runs\\deepseek_migration\\commands\\0025.stdout.log",
+        "stderr_path": "D:\\Tmp\\runs\\deepseek_migration\\commands\\0025.stderr.log"
+      }
+    ],
+    "changed_files": [
+      "README.md",
+      "verify.py"
+    ]
+  }
+}

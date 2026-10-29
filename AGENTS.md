@@ -1,5 +1,12 @@
 # Project instructions
 
+## Current project API policy
+
+- The user's latest instruction overrides the former project runtime model: Coding Agent and Video Agent must use `deepseek-flash` through the official `https://api.deepseek.com` Responses API, reading only `DEEPSEEK_API_KEY` for authentication.
+- Never use `OPENAI_API_KEY` for this project, and never fall back to another provider or credential. Missing DeepSeek credentials must cause an explicit error. Do not pass `OPENAI_*` environment variables into Coding Agent child processes.
+- Preserve historical logs and model attribution. Existing earlier OpenAI runs and demo videos must not be relabeled as DeepSeek executions. Use new run directories for post-migration runs.
+- The subagent model requirement below applies to Codex collaboration helpers; the two project runtime Agents follow this newer API policy. Subagent deletion remains prohibited.
+
 ## Git workflow
 
 - This project lives in `D:\Tmp` and uses `https://github.com/fengjunziya/Tmp.git` as its `origin` remote.

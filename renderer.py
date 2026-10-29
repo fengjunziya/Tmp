@@ -1,6 +1,7 @@
 """Compile validated data to a restricted FFmpeg graph; never accept arbitrary filters."""
 import json
 import html
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -37,7 +38,11 @@ def render(t, report, inventory, config, run_dir):
     run_dir = Path(run_dir).resolve()
     length = report['computed_duration_ms']
     srt = run_dir / f'captions_v{t.version}.srt'
-    srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text.replace(chr(13), " ").replace(chr(10), " ").replace('-->', '→'), quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
+    for c in t.captions:
+        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
+            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
+    if t.captions:
+        srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text, quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
     argv = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-filter_complex_threads', '1', '-y']
     input_indices = []
     n = 0
@@ -75,7 +80,7 @@ def render(t, report, inventory, config, run_dir):
             vf += f',fade=t=out:st={dur-c.transition_out.duration_ms/1000}:d={c.transition_out.duration_ms/1000}'
         graph.append(vf + f'[v{i}]')
         trim = f'atrim=start={c.in_ms/1000}:duration={dur}' if c.kind == 'video' and ai == vi else f'atrim=duration={dur}'
-        af = f'[{ai}:a]{trim},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={"0" if c.mute else str(c.gain_db) + "dB"}'
+        af = f'[{ai}:a]{trim},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=duration={dur},volume={"0" if c.mute else str(c.gain_db) + "dB"}'
         if c.transition_out.type == 'fade':
             af += f',afade=t=out:st={dur-c.transition_out.duration_ms/1000}:d={c.transition_out.duration_ms/1000}'
         graph.append(af + f'[a{i}]')
@@ -94,11 +99,18 @@ def render(t, report, inventory, config, run_dir):
     if t.bgm:
         bgm = t.bgm
         remaining = (length - bgm.start_ms) / 1000
-        graph.append(f'[{bgm_idx}:a]atrim=start={bgm.in_ms/1000}:duration={remaining},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={bgm.gain_db}dB,afade=t=in:st=0:d={bgm.fade_in_ms/1000},afade=t=out:st={(length-bgm.start_ms-bgm.fade_out_ms)/1000}:d={bgm.fade_out_ms/1000},adelay={bgm.start_ms}|{bgm.start_ms}[music]')
-        graph.append(f'[{aa}][music]amix=inputs=2:duration=first:normalize=0,atrim=duration={length/1000}[mixed]')
+        graph.append(f'[{bgm_idx}:a]atrim=start={bgm.in_ms/1000}:duration={remaining},asetpts=PTS-STARTPTS,aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,apad,atrim=duration={remaining},volume={bgm.gain_db}dB,afade=t=in:st=0:d={bgm.fade_in_ms/1000},afade=t=out:st={(length-bgm.start_ms-bgm.fade_out_ms)/1000}:d={bgm.fade_out_ms/1000},adelay={bgm.start_ms}|{bgm.start_ms}[music]')
+        graph.append(f'[{aa}][music]amix=inputs=2:duration=longest:normalize=0[mixed]')
         aa = 'mixed'
+    # Pad every audio branch before the final trim: a short BGM/source or AAC
+    # encoder delay must not leave the computed movie duration without audio.
+    graph.append(f'[{aa}]apad,atrim=duration={length/1000}[finala]')
+    aa = 'finala'
     # cwd relative SRT avoids Windows drive-letter colon escaping in filter expressions.
-    graph.append(f"[{vv}]subtitles=filename='{srt.name}':force_style='FontName=Microsoft YaHei,FontSize=40,Alignment=2,MarginV=52'[finalv]")
+    if t.captions:
+        graph.append(f"[{vv}]subtitles=filename='{srt.name}':force_style='FontName=Microsoft YaHei,FontSize=40,Alignment=2,MarginV=52'[finalv]")
+    else:
+        graph.append(f'[{vv}]null[finalv]')
     pending = run_dir / f'output_v{t.version}.pending.mp4'
     argv += ['-filter_complex', ';'.join(graph), '-map', '[finalv]', '-map', f'[{aa}]', '-t', str(length/1000), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-r', str(fps), '-c:a', 'aac', '-ar', '48000', '-ac', '2', '-b:a', '128k', '-movflags', '+faststart', str(pending)]
     execute(argv, run_dir, f'render_v{t.version}', config.command_timeout_s)

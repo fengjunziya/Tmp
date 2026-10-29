@@ -6,9 +6,13 @@
 
 用户最新明确考核限时为 **120 分钟**，覆盖任务书原来的 180 分钟计划；以 120 分钟为本次执行预算，仅保留必要的编程恢复、成片及解码验收。
 
+## 当前模型接入
+
+用户后续明确禁用 OPENAI_API_KEY。项目现使用 deepseek-flash、DEEPSEEK_API_KEY 和 https://api.deepseek.com 的 Responses 接口；缺少该密钥直接失败，无回退。已存在的 OpenAI 历史运行及两版演示保留原始模型来源，迁移后的运行另存目录，不能将旧结果改称 DeepSeek 验证。
+
 ## 阶段与证据
 
-1. WP01：检查 Python、Git、FFmpeg、ffprobe、中文字体、编码器和字幕滤镜；实际验证 gpt-6-sol/high 的图像输入与工具调用。保存 reports/env_check.json 和配置示例。
+1. WP01：检查 Python、Git、FFmpeg、ffprobe、中文字体、编码器和字幕滤镜；实际验证 deepseek-flash/high 的图像输入与工具调用。保存 reports/env_check.json 和配置示例。
 2. WP02–03：实现共享 Responses API 工具循环和六个编程工具；在独立目录先运行错误程序，记录真实失败，再由 Coding Agent 修改并通过不可变验收。提交 stage-a-ready；此时不包含视频业务实现。
 3. WP04：仅通过已验收 Coding Agent 的文件工具创建和修改视频业务源文件。保存每次调用、源码差异、错误和修复证据；人工干预另记来源。
 4. WP05：Video Agent 分析真实演示素材，规划、校验、渲染、完整解码验证并发布 v1。
@@ -45,7 +49,7 @@ JSON 时间线需 Pydantic 结构校验和语义校验；包含 schema_version�
 | AC11 | 用量、费用和时间可复算 | 原始 usage、定价来源或未知声明、阶段时间 |
 | AC12 | 180 分钟与一页说明 | 实际完整时间记录和一页报告 |
 
-模型必须 gpt-6-sol、reasoning high，无替代模型。API 暂时错误最多额外重试两次；每版渲染最多修复两轮。达到时间/轮数预算时保存失败与未完成项。SDK 重试关闭，以统一层为准。模型文字不能替代真实执行。
+模型必须 deepseek-flash、reasoning high，无替代模型。API 暂时错误最多额外重试两次；每版渲染最多修复两轮。达到时间/轮数预算时保存失败与未完成项。SDK 重试关闭，以统一层为准。模型文字不能替代真实执行。
 
 日志脱敏，保留需求、调用、工具返回、退出码、耗时、diff 和哈希。成本单价未核实或用量缺失时记 null/未知，不能记零。大体积媒体保留本地，通过 manifest 哈希关联；源码、需求、时间线、文本证据提交 Git。
 

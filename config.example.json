@@ -1,8 +1,8 @@
 {
-  "model": "gpt-6-sol",
+  "model": "deepseek-flash",
   "reasoning_effort": "high",
-  "api_key_env": "OPENAI_API_KEY",
-  "api_base": null,
+  "api_key_env": "DEEPSEEK_API_KEY",
+  "api_base": "https://api.deepseek.com",
   "api_retries": 2,
   "max_turns": 80,
   "request_timeout_s": 180,
@@ -12,7 +12,11 @@
   "ffmpeg": "ffmpeg",
   "ffprobe": "ffprobe",
   "font_path": "C:/Windows/Fonts/msyh.ttc",
-  "output": {"width": 1280, "height": 720, "fps": 30},
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30
+  },
   "pricing": {
     "currency": "USD",
     "verified_on": null,

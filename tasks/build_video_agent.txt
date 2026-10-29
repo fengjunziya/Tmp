@@ -1,6 +1,6 @@
 你是刚通过阶段 A 验收的通用 Coding Agent。现在自主开发视频剪辑 Agent，必须用现有文件工具写入并修复业务源码，用进程工具执行真实演示，保留完整证据。请高效完成；用户规定整个考核两小时，不做冗余测试或 GUI。
 
-先读取 docs/requirements.md、agent_core.py（分段读取以掌握实际接口）、config.example.json、examples/request_v1.txt、request_v2.txt、materials/demo/manifest.json 及 scripts/accept_video.py。agent_core.py 可复用 Config、load_config、EventLogger、ModelClient、AgentLoop、sha256_file。模型固定 gpt-6-sol，reasoning_effort high，不能更换或再派生其他 Agent；禁止任何直接或间接删除文件/文件夹，包括临时清理。禁止 git reset/clean、改写验收和读取密钥。不要修改阶段 A 核心和 scripts/accept_video.py；不要提交 Git（主执行者做）。所有新业务源码必须通过 write_file/replace_text 创建，不能把代码写在 run_process 的 Python -c 中，以保证来源追踪。允许的业务文件为 video_agent.py、media.py、timeline.py、renderer.py、verify.py；你可另写 tests/test_video.py 和 README.md（如需）。保持实现简单可运行，不要过度框架化。
+先读取 docs/requirements.md、agent_core.py（分段读取以掌握实际接口）、config.example.json、examples/request_v1.txt、request_v2.txt、materials/demo/manifest.json 及 scripts/accept_video.py。agent_core.py 可复用 Config、load_config、EventLogger、ModelClient、AgentLoop、sha256_file。模型固定 deepseek-flash，reasoning_effort high，不能更换或再派生其他 Agent；禁止任何直接或间接删除文件/文件夹，包括临时清理。禁止 git reset/clean、改写验收和读取密钥。不要修改阶段 A 核心和 scripts/accept_video.py；不要提交 Git（主执行者做）。所有新业务源码必须通过 write_file/replace_text 创建，不能把代码写在 run_process 的 Python -c 中，以保证来源追踪。允许的业务文件为 video_agent.py、media.py、timeline.py、renderer.py、verify.py；你可另写 tests/test_video.py 和 README.md（如需）。保持实现简单可运行，不要过度框架化。
 
 交付 CLI（都支持 --config config.example.json，默认可自动读取该文件）：
 python video_agent.py create --assets materials/demo --request examples/request_v1.txt --run-dir runs/demo --config config.example.json

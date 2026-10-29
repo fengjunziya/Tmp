@@ -1,0 +1,18 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -34,6 +34,15 @@
+         path = Path(assets['asset_root']) / a['relative_path']
+         if not path.is_file() or sha256_file(path) != a['sha256']:
+             raise ValueError(f'Source asset changed; frozen analysis invalid: {a["relative_path"]}')
++
++
++def ensure_provider_checkpoints(run_dir, config):
++    """Never resume/commingle planning checkpoints created under another provider."""
++    expected = {'model': config.model, 'api_base': config.api_base, 'credential_env': config.api_key_env}
++    for checkpoint in sorted(Path(run_dir).glob('agent_v*/checkpoint.json')):
++        state = read(checkpoint)
++        if state.get('runtime_config') != expected:
++            raise ValueError(f'{checkpoint} was created by a legacy/different provider; use a new run directory after migration')
+ 
+ 
+ def completed_matches(run_dir, version, raw, assets):

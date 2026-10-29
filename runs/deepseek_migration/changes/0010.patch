@@ -1,0 +1,8 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -121,4 +121,4 @@
+         else:
+             evidence = {'timeline_semantic_check': next(c for c in derived['constraint_checks'] if c['requirement_id'] == req['requirement_id']), 'movie_frames': frames if field in ('clip_order', 'title_text', 'ending_text') else []}
+         check('hard_'+req['requirement_id'], all(next(c for c in checks if c['check_id'] == n)['status'] == 'pass' for n in associated), {'field': field, 'expected': req['expected']}, req['requirement_id'], evidence)
+-    return {'version': t.version, 'status': 'pass' if all(c['status'] == 'pass' for c in checks) else 'needs_review', 'checks': checks, 'probe': {'video_duration_ms': actual_ms, 'container_duration_ms': round(float(info['format']['duration'])*1000)}, 'visual_review_raw': result, 'sampled_frames': frames, 'limitations': ['Sampled visual frames do not establish every intermediate frame', 'Gain is verified by controlled source graph and encoded audio presence, not isolated-source waveform separation']}
++    return {'version': t.version, 'status': 'pass' if all(c['status'] == 'pass' for c in checks) else 'needs_review', 'checks': checks, 'probe': {'video_duration_ms': actual_ms, 'container_duration_ms': round(float(info['format']['duration'])*1000)}, 'visual_review_raw': result, 'sampled_frames': frames, 'limitations': ['Sampled visual frames do not establish every intermediate frame', 'Gain is verified by controlled source graph and encoded audio presence, not isolated-source waveform separation', 'Audio coverage is checked from stream/container durations, not a per-sample silence map']}

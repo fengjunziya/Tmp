@@ -1,0 +1,61 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -63,28 +63,45 @@
+             raise ValueError('Frozen requirement baseline cannot be changed')
+         return previous
+     parent = read(run_dir / 'requirements_v1.json') if version == 2 else None
++    instruction = ('Return JSON ONLY. Supported constraint fields: ' + ', '.join(FIELDS) + '. '
++                   'Extract ONLY constraints explicitly requested in this text, never fill every field or invent captions/music. '
++                   'Use milliseconds, gain dB numbers, codec libx264 for H.264, mp4, AAC, clip_order list of video/image. '
++                   'For derived times explicitly requested as "last N seconds", use explicitly specified total duration if available; otherwise report needs_review rather than inventing a time. '
++                   'Every constraint needs an exact verbatim substring of THIS request as source_text; include all unsupported or ambiguous requirements in unsupported_requirements with original wording. '
++                   'Selecting source intervals, providing assets and mixing a supplied BGM are operational instructions supported by the renderer, not unsupported fields. '
++                   'If automatic dialogue transcription is requested, set dialogue_transcription_requested true. ')
+     if version == 1:
+-        prompt = ('Extract ALL formal constraints from the user request as JSON ONLY: {"hard_constraints":[{"field":"...","expected":...,"source_text":"verbatim substring from request"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+-                  'Exactly one item for EACH field: ' + ', '.join(FIELDS) + '. Units ms, gain dB numeric, clip_order list ["video","image"] etc; codec expected libx264 for H.264, container mp4. ending_start_ms is derived from final two seconds, ending_end_ms from total. Video mute is false when keeping source audio. fit is pad. The named demo assets, selecting a mathematically correct source interval, and adding the supplied BGM are IMPLEMENTED operational requirements, NOT unsupported. List only truly impossible formal features in unsupported_requirements; do not list normal production instructions there. Source citation must occur verbatim in request.\nREQUEST:\n' + raw)
++        prompt = instruction + ('Format: {"hard_constraints":[{"field":"...","expected":...,"source_text":"..."}],'
++                                '"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
++                                'Unrequested fields use declared output defaults during planning (not frozen hard requirements).\nREQUEST:\n' + raw)
+         parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_frozen_requirements').output_text)
+         rows = parsed['hard_constraints']
+-        if len(rows) != len(FIELDS) or {r['field'] for r in rows} != set(FIELDS):
+-            raise ValueError('Model extraction omitted/duplicated a formal field')
++        superseded = []
+         hard = [{'requirement_id': f'R1_{r["field"]}', 'field': r['field'], 'expected': r['expected'], 'source_text': r['source_text']} for r in rows]
+-        superseded = []
+     else:
+-        prompt = ('Compare new revision to frozen baseline. Output JSON ONLY: {"changes":[{"field":"title_text or clip_order","expected":...,"source_text":"exact verbatim quote","reason":"why explicitly replaced"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+-                  'Only explicitly overridden constraints may change; preserve every other baseline field. A reversal of order explicitly replaces clip_order. Title change explicitly replaces title_text, title timing remains unchanged. No invented captions.\nBASELINE:\n' + json.dumps(parent['hard_constraints'], ensure_ascii=False) + '\nNEW REQUEST:\n' + raw)
++        prompt = instruction + ('Format: {"changes":[{"field":"...","expected":...,"source_text":"...","reason":"why explicitly added or replaced"}],'
++                                '"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
++                                'Return only explicit new/different constraints; statements keeping old values are NOT changes. '
++                                'Any supported field may be added or replaced. Preserve all other baseline constraints.\nBASELINE:\n'
++                                + json.dumps(parent['hard_constraints'], ensure_ascii=False) + '\nNEW REQUEST:\n' + raw)
+         parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_revision_changes').output_text)
+         changes = parsed['changes']
+-        if {x['field'] for x in changes} != {'title_text', 'clip_order'} or len(changes) != 2:
+-            raise ValueError('Revision needs explicit title and order replacements; other changes require review')
+-        hard = [dict(r) for r in parent['hard_constraints'] if r['field'] not in ('title_text', 'clip_order')]
++        old_by_field = {r['field']: r for r in parent['hard_constraints']}
++        hard = [dict(r) for r in parent['hard_constraints'] if r['field'] not in {x['field'] for x in changes}]
+         superseded = []
+         for change in changes:
+-            old = next(r for r in parent['hard_constraints'] if r['field'] == change['field'])
+-            superseded.append({'requirement_id': old['requirement_id'], 'field': change['field'], 'reason': change['reason'], 'source_text': change['source_text']})
+-            hard.append({'requirement_id': f'R2_{change["field"]}', 'field': change['field'], 'expected': change['expected'], 'source_text': change['source_text']})
++            if not isinstance(change.get('reason'), str) or not change['reason'].strip():
++                raise ValueError('Each revision change requires a reason')
++            old = old_by_field.get(change['field'])
++            if old:
++                if old['expected'] == change['expected']:
++                    raise ValueError(f'Unchanged constraint is not a revision: {change["field"]}')
++                superseded.append({'requirement_id': old['requirement_id'], 'field': change['field'], 'reason': change['reason'], 'source_text': change['source_text']})
++            hard.append({'requirement_id': f'R2_{change["field"]}', 'field': change['field'], 'expected': change['expected'], 'source_text': change['source_text'], 'reason': change['reason']})
++    extracted = rows if version == 1 else changes
++    fields = [r['field'] for r in extracted]
++    if len(fields) != len(set(fields)) or any(f not in FIELDS for f in fields):
++        raise ValueError(f'Duplicate or unsupported constraint fields need review: {fields}')
+     for r in hard:
+         source = r['source_text']
+         if not isinstance(source, str) or not source or source not in (raw if r['requirement_id'].startswith('R2_') or version == 1 else parent['raw_text']):

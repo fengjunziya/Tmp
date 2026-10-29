@@ -1,0 +1,15 @@
+--- a/D:\Tmp\renderer.py
++++ b/D:\Tmp\renderer.py
+@@ -38,7 +38,11 @@
+     run_dir = Path(run_dir).resolve()
+     length = report['computed_duration_ms']
+     srt = run_dir / f'captions_v{t.version}.srt'
+-    srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text.replace(chr(13), " ").replace(chr(10), " ").replace('-->', '→'), quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
++    for c in t.captions:
++        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
++            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
++    if t.captions:
++        srt.write_text(''.join(f'{i}\n{stamp(c.start_ms)} --> {stamp(c.end_ms)}\n{html.escape(c.text, quote=False)}\n\n' for i, c in enumerate(t.captions, 1)), encoding='utf-8')
+     argv = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-filter_complex_threads', '1', '-y']
+     input_indices = []
+     n = 0

@@ -1,53 +1,70 @@
 # Coding Agent 与视频剪辑 Agent
 
-按任务书分阶段实现的 Python CLI 项目。通用 Coding Agent 使用真实模型工具循环编写和运行代码；视频业务由该 Agent 在阶段 A 验收后生成。用户已授权使用自制 10 秒演示素材，开发总预算按最新要求调整为两小时。
+按任务书分阶段实现的 Python CLI 项目。通用 Coding Agent 使用真实模型工具循环编写和运行代码；视频业务由该 Agent 在阶段 A 验收后生成。用户已授权使用自制 10 秒演示素材，开发总预算按最新要求为 120 分钟。
 
-## 环境
+## 当前模型接入（DeepSeek）
 
-已验证 Windows、Python 3.13.7、Git、FFmpeg/ffprobe 8.1.2、openai 2.44.0、pydantic 2.13.4。兼容 Python 3.12+。FFmpeg 需要 libx264、AAC、subtitles/ASS、xfade，并安装可用中文字体。
+用户最新明确：项目两个 Agent 只使用 **deepseek-flash**、**high** 推理等级，通过 **DEEPSEEK_API_KEY** 接入 **https://api.deepseek.com** 的 **Responses API**。这是当前唯一允许的运行时模型与凭据；**禁止使用 OPENAI_API_KEY，也不存在任何 OpenAI 或其他提供商的凭据回退**。缺少 `DEEPSEEK_API_KEY` 时直接明确失败。
 
 ```powershell
 python -m pip install -r requirements.txt
-$env:OPENAI_API_KEY = "你的密钥"
-python scripts/preflight.py --check-model --output reports/env_check.json
+$env:DEEPSEEK_API_KEY = "你的 DeepSeek 密钥"
+python scripts/preflight.py --check-model --output reports/env_check_deepseek.json
 python scripts/make_demo_assets.py --output materials/demo
 ```
 
-配置见 config.example.json。模型固定 `gpt-6-sol`、推理等级固定 `high`，不自动切换模型。密钥仅从环境变量读取。可通过 `OPENAI_BASE_URL` 或 `api_base` 指定兼容端点；接口必须支持 Responses、图片和函数工具。未知单价记为 null，不能解释为免费。
+预检报告固定使用 `reports/env_check_deepseek.json`。其中记录 `credential_env=DEEPSEEK_API_KEY`、`model_requested=deepseek-flash`、`reasoning_effort_requested=high`、官方 `api_base`，并真实验证图片输入与函数工具调用。配置见 `config.example.json`；`api_base` 只允许官方 `https://api.deepseek.com`（可带 `/v1`），`api_key_env` 只允许 `DEEPSEEK_API_KEY`，`model` 只允许 `deepseek-flash`，`reasoning_effort` 只允许 `high`。未知单价记为 null/unknown，不能解释为免费。
+
+环境已验证 Windows、Python 3.13.7、Git、FFmpeg/ffprobe 8.1.2、openai SDK 2.44.0、pydantic 2.13.4。这里的 openai SDK 仅作为 Responses 协议传输层，显式使用 DeepSeek 官方端点和 `DEEPSEEK_API_KEY`，不使用 `OPENAI_API_KEY` 认证，也不从 `OPENAI_BASE_URL` 选择端点。兼容 Python 3.12+。FFmpeg 需要 libx264、AAC、subtitles/ASS、xfade，并安装可用中文字体。
 
 ## 通用 Coding Agent
 
 ```powershell
-python coding_agent.py run --task examples/coding_smoke.txt --workspace .local/smoke_workspace --run-dir runs/stage_a --config config.example.json --acceptance reports/coding_smoke_acceptance.json --read-only test_calculator.py --allow-write calculator.py --allow-write sum_cli.py
+python coding_agent.py run --task examples/coding_smoke.txt --workspace .local/smoke_workspace --run-dir runs/stage_a_deepseek --config config.example.json --acceptance reports/coding_smoke_acceptance.json --read-only test_calculator.py --allow-write calculator.py --allow-write sum_cli.py
 ```
 
-上述命令使用阶段 A 现场建立的独立工作目录；其中真实的初始失败、源码修改和成功执行保存在 runs/stage_a。通用任务可换用自己的目录、任务文本及验收 JSON；验收格式为 `{"commands":[["python","test_example.py"]]}`。只有独立验收通过的 finish 才视为完成。`--resume` 从指定 run-dir 检查点恢复；可用 `--max-turns` 和 `--total-timeout-s` 限定预算。
+上述命令使用独立工作目录；真实初始失败、源码修改和成功执行应保存在新的 `runs/stage_a_deepseek`（或本阶段实际 run-dir）中。通用任务可换用自己的目录、任务文本及验收 JSON；验收格式为 `{"commands":[["python","test_example.py"]]}`。只有独立验收通过的 finish 才视为完成。`--resume` 从指定 run-dir 检查点恢复；跨提供商或旧模型检查点不会恢复，必须换新运行目录。可用 `--max-turns` 和 `--total-timeout-s` 限定预算。
 
-工具包括 list_files、read_file、write_file、replace_text、run_process、finish。进程使用 argv 与超时；文件变更记录 SHA256 和 diff。路径限制减少误操作，不是任意程序的安全沙箱。子代理禁止删除文件，不允许改写验收以求通过。阶段完成后由执行者提交并推送 Git。
+工具包括 list_files、read_file、write_file、replace_text、run_process、finish。进程使用 argv 与超时；文件变更记录 SHA256 和 diff。路径限制减少误操作，不是任意程序的安全沙箱。子代理禁止删除文件，不允许改写验收以求通过。当前阶段由主执行者统一提交 Git；本 Agent 不执行提交或推送。
 
-## 阶段证据
+## 阶段证据与历史归属
 
-- 实施范围与验收：docs/requirements.md。
-- 环境检查与计时范围：reports/。
-- 编程失败、修复、验收、模型用量：runs/stage_a/。
-- 合成素材生成命令与哈希：materials/demo/manifest.json。
+- 实施范围与验收：`docs/requirements.md`。
+- 环境检查、DeepSeek 探针与计时范围：`reports/`，其中当前预检报告为 `reports/env_check_deepseek.json`。
+- 迁移前的历史运行和两版成片：`runs/demo/`。它们由此前 OpenAI 模型生成，**仍是 OpenAI 历史结果，不能改称 DeepSeek 成果，不能覆盖或重标历史日志**。
+- 迁移阶段真实 DeepSeek 调用与源码修改证据：本次 run-dir（以及既有的 `runs/deepseek_migration/`）；旧 `runs/demo` 不跨提供商恢复检查点。
+- 合成素材生成命令与哈希：`materials/demo/manifest.json`。
 
-## 视频 Agent（已实际运行）
+**本次 DeepSeek 迁移只完成了真实图片/工具调用、业务源码接入与源码修改验证，没有重新执行 create/revise，也没有重新渲染两部片。** 所以 `runs/demo/output_v1.mp4`、`output_v2.mp4` 及其 `validation_v1/v2.json` 保持迁移前原样；`scripts/accept_video.py` 只读取这两版既有产物，不重新渲染。历史运行与费用必须分提供商统计：`runs/demo/usage.json` 属于迁移前提供商，新 run 的 `usage.json` 记录 `provider=deepseek` 和官方端点，二者不能相加后冒充同一模型成本。
+
+## 视频 Agent
+
+新的迁移后运行必须使用全新目录，例如：
 
 ```powershell
-python video_agent.py create --assets materials/demo --request examples/request_v1.txt --run-dir runs/demo --config config.example.json
-python video_agent.py revise --run-dir runs/demo --base-revision 1 --request examples/request_v2.txt --config config.example.json
+python video_agent.py create --assets materials/demo --request examples/request_v1.txt --run-dir runs/deepseek_video --config config.example.json
+python video_agent.py revise --run-dir runs/deepseek_video --base-revision 1 --request examples/request_v2.txt --config config.example.json
 python scripts/accept_video.py
 ```
 
-`--config` 缺省为 `config.example.json`。FFmpeg/ffprobe 和中文字体必须可用，模型图片与工具调用需要配置支持 Responses API 的凭据。模型分析的是抽样素材帧和**实际编码成片**帧，不把未采样时段描述为已确认；演示为无对白合成素材，文案来自用户，不启动 ASR。若正式任务需要对白识别/自动字幕且没有带时间戳的真实 ASR 服务，将明确失败，不会编造转录。模型提取需求后冻结 `requirements_vN.json`；v2 继承除明确替代的标题和镜头顺序外的每项硬要求。视频镜头时长是源区间，图片显示时长独立；500ms dissolve 是真实交叠并含跨淡音频。中文 SRT 由本地文件烧录。Pydantic 和实际源文件共同约束时间线；渲染只允许经本地编译的滤镜，产物先验证 `.pending.mp4` 再原子发布。若通过版本已存在，重复运行不会覆盖。
+`--config` 缺省为 `config.example.json`。上例只说明命令形式；本次未执行，因此 `runs/deepseek_video/` 不应被声称为已生成。`runs/demo/` 是迁移前历史目录，不要用它验证 DeepSeek 接入。如果目标 run-dir 中已有其他模型/提供商留下的 `agent_v*/checkpoint.json`，程序会拒绝继续并提示改用新目录；`AgentLoop` 恢复时也会校验 `runtime_config`，不跨提供商恢复。
 
-交付在 `runs/demo/`：`assets.json`、`analysis.json`、`requirements_v1/v2.json`、`timeline_v1/v2.json`、`derived_v1/v2.json`、`output_v1/v2.mp4`、`validation_v1/v2.json`、`revision_diff.json`、`events.jsonl`、`usage.json`、`manifest.json`、两版 `agent_v*/checkpoint.json`、证据帧与 `commands/` 原始 argv/退出码/标准输出错误。失败候选和故障文件一并保留，禁止删除；`manifest.json` 不递归哈希自身，关联素材 SHA256。费用缺乏核实单价时为 null/unknown。
+FFmpeg/ffprobe 和中文字体必须可用，模型图片与工具调用需要 `DEEPSEEK_API_KEY`。模型分析的是抽样素材帧和**实际编码成片**帧，不把未采样时段描述为已确认。演示为无对白合成素材，文案来自用户；**ASR 未配置时，若需求触发对白识别/自动字幕，会明确失败，不会编造转录**。
+
+模型提取需求后冻结 `requirements_vN.json`。当前 `requirements()` 支持 `duration_ms`、尺寸、fps、编码、`clip_order`、片头/片尾文案与时间、转场、增益/静音、BGM 音量/淡入淡出/循环、适配方式等字段的任意明确修改，不再假定 v2 必须同时改标题和镜头顺序。v2 只替换用户明确新增或改变的字段，其余基线的标题、顺序、BGM 等硬要求原样保留；例如“只改 BGM 音量”不会改动旧标题或顺序。v1→v2 仍只允许从已发布的版本 1 修订到版本 2，不能跳版；历史 `runs/demo` 的两版仍只反映其当时的标题/顺序修改，不能当作新能力的 DeepSeek 证据。
+
+中文给定文案继续支持；字幕中的 ASS/HTML 控制序列、花括号、尖括号、反斜杠、控制字符和 `-->` 会被时间线与渲染器明确拒绝，避免字幕注入。**没有片头/片尾字幕也是合法时间线**：渲染器会跳过 SRT 烧录，验证器只在字幕确实存在时检查对应文字，不会对缺失字幕调用 `next()` 报错。
+
+渲染只允许经本地编译的滤镜，产物先验证 `.pending.mp4` 再原子发布。每个镜头的音轨先 `apad` 补足、再裁到镜头片段长度；BGM 也先补足再裁到剩余时长；最终混音再次补足并裁到计算片长，避免短音轨或 AAC 编码延迟在片尾留下静音缺口。若通过版本已存在，重复运行不会覆盖。
+
+验证检查非空、ffprobe 视频/音频流、尺寸、fps、编解码器、完整解码、**音频流实际覆盖长度**和**容器时长**，不只检查 AAC 存在；时长容差取 `max(100 ms, 2000/fps)`。抽帧覆盖首尾、每镜头和转场附近；关键文字及内容由实际成片证据复核；证据不足为 needs_review。音频覆盖依据真实流的 duration/start_time 与容器 duration，不是逐采样点静音图，因此不能夸大为“每个采样点都无缺口”。正常速度下的基础效果仍以迁移前两版历史成片为准（本次未重渲染）；未声称慢放、变速或其他增强效果。
+
+交付（历史目录 `runs/demo/`）包括：`assets.json`、`analysis.json`、`requirements_v1/v2.json`、`timeline_v1/v2.json`、`derived_v1/v2.json`、`output_v1/v2.mp4`、`validation_v1/v2.json`、`revision_diff.json`、`events.jsonl`、`usage.json`、`manifest.json`、两版 `agent_v*/checkpoint.json`、证据帧与 `commands/` 原始 argv/退出码/标准输出错误。失败候选和故障文件一并保留，禁止删除；`manifest.json` 不递归哈希自身，关联素材 SHA256。费用缺乏核实单价时为 null/unknown；历史 OpenAI 与当前 DeepSeek 的调用和费用必须分开统计。
 
 若正常渲染没有自然失败，独立的**显式故障注入**用于真实证明错误→修复：
 
 ```powershell
-python video_agent.py fault-demo --run-dir runs/demo --config config.example.json
+python video_agent.py fault-demo --run-dir runs/deepseek_video --config config.example.json
 ```
 
-此命令用刻意无效的视频编码器触发 FFmpeg 非零退出，记录原始 stderr 和故障来源，再用 `libx264` 修正并 probe 真正生成的诊断媒体；诊断产物**不**替代两版正式成片。每版渲染最多首次加两次修复尝试。验证含完整解码、流参数、时长和模型复核的有限采样帧；不能保证未采样每帧内容，也不能凭混合音轨完全隔离证明单一路的增益，增益以受控滤镜链、源证据和真实 AAC 音轨为依据。指定服务、计费和评分细则等未确认事项仍需正式考核方确认。媒体文件保存在本地，由主执行者处理 Git 提交。
+此命令需要先完成 create，使运行目录已有 assets.json；它用刻意无效的视频编码器触发 FFmpeg 非零退出，记录原始 stderr 和故障来源，再用 `libx264` 修正并 probe 真正生成的诊断媒体；诊断产物**不**替代两版正式成片。每版渲染最多首次加两次修复尝试。指定服务、计费和评分细则等未确认事项仍需正式考核方确认。媒体文件保存在本地，由主执行者处理 Git 提交。

@@ -1,0 +1,9 @@
+DEEPSEEK_API_KEY True
+deepseek-flash True
+https://api.deepseek.com True
+env_check_deepseek.json True
+runs/deepseek_video True
+runs/demo True
+ASR True
+v1 True
+v2 True

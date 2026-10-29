@@ -1,0 +1,24 @@
+--- a/D:\Tmp\media.py
++++ b/D:\Tmp\media.py
+@@ -68,6 +68,21 @@
+     return results
+ 
+ 
++def sampling_interval(config):
++    interval = getattr(config, 'sample_interval_ms', 2500)
++    if type(interval) is not int or not 2000 <= interval <= 5000:
++        raise ValueError('sample_interval_ms must be an integer between 2000 and 5000')
++    return interval
++
++
++def sample_points(asset, config):
++    if asset['kind'] != 'video':
++        return [0]
++    duration = asset['duration_ms']
++    interval = sampling_interval(config)
++    return sorted(set([*range(0, duration, interval), max(0, duration - 200)]))
++
++
+ def observe(asset, inventory_data, run_dir, config, model, points=None, prefix='sample'):
+     if asset['kind'] == 'audio':
+         return {'asset_id': asset['asset_id'], 'summary': 'Audio only; probe metadata, no visual evidence or semantic transcription.', 'observed_intervals': [], 'candidate_shots': [], 'evidence_frames': [], 'uncertainties': ['Audio semantics not transcribed']}

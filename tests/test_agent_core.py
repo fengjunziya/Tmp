@@ -11,7 +11,7 @@ import uuid
 
 from pydantic import ValidationError
 
-from agent_core import AgentLoop, Config, EventLogger
+from agent_core import AgentLoop, Config, EventLogger, ModelClient
 
 
 TEST_ROOT = Path(__file__).resolve().parents[1] / ".local" / "tests"
@@ -30,7 +30,7 @@ class ScriptedResponses:
         self.requests.append(copy.deepcopy(kwargs))
         return {
             "id": f"response-{len(self.requests)}",
-            "model": "gpt-6-sol",
+            "model": "deepseek-flash",
             "output": next(self.outputs),
             "usage": {"input_tokens": 10, "output_tokens": 5},
         }
@@ -48,14 +48,16 @@ class AgentCoreTests(unittest.TestCase):
     def run_script(self, outputs, handlers, max_turns=4):
         scripted = ScriptedResponses(outputs)
         fake_client = SimpleNamespace(responses=scripted)
-        config = Config(api_key_env="UNIT_TEST_OPENAI_KEY", max_turns=max_turns, api_retries=0)
-        with patch.dict(os.environ, {"UNIT_TEST_OPENAI_KEY": "not-a-real-key"}), \
+        config = Config(max_turns=max_turns, api_retries=0)
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "not-a-real-key"}), \
              patch("agent_core.OpenAI", return_value=fake_client) as constructor:
             result = AgentLoop(config, self.logger, self.specs, handlers).run("task", "rules")
         constructor.assert_called_once()
         self.assertEqual(constructor.call_args.kwargs["max_retries"], 0)
+        self.assertEqual(constructor.call_args.kwargs["api_key"], "not-a-real-key")
+        self.assertEqual(constructor.call_args.kwargs["base_url"], "https://api.deepseek.com")
         for request in scripted.requests:
-            self.assertEqual(request["model"], "gpt-6-sol")
+            self.assertEqual(request["model"], "deepseek-flash")
             self.assertEqual(request["reasoning"], {"effort": "high"})
         return result, scripted.requests
 
@@ -116,7 +118,18 @@ class AgentCoreTests(unittest.TestCase):
             Config(model="gpt-6-luna")
         with self.assertRaises(ValidationError):
             Config(reasoning_effort="medium")
-        self.assertEqual((Config().model, Config().reasoning_effort), ("gpt-6-sol", "high"))
+        self.assertEqual((Config().model, Config().reasoning_effort), ("deepseek-flash", "high"))
+
+    def test_missing_deepseek_key_never_falls_back_to_openai(self):
+        with self.assertRaises(ValidationError):
+            Config(api_key_env="OPENAI_API_KEY")
+        with self.assertRaises(ValidationError):
+            Config(api_base="https://api.openai.com/v1")
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "must-never-be-used"}, clear=True), \
+             patch("agent_core.OpenAI") as constructor:
+            with self.assertRaisesRegex(ValueError, "DEEPSEEK_API_KEY"):
+                ModelClient(Config(), self.logger)
+        constructor.assert_not_called()
 
 
 if __name__ == "__main__":

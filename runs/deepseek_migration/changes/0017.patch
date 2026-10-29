@@ -1,0 +1,11 @@
+--- a/D:\Tmp\README.md
++++ b/D:\Tmp\README.md
+@@ -57,7 +57,7 @@
+ 
+ 渲染只允许经本地编译的滤镜，产物先验证 `.pending.mp4` 再原子发布。每个镜头的音轨先 `apad` 补足、再裁到镜头片段长度；BGM 也先补足再裁到剩余时长；最终混音再次补足并裁到计算片长，避免短音轨或 AAC 编码延迟在片尾留下静音缺口。若通过版本已存在，重复运行不会覆盖。
+ 
+-验证检查非空、ffprobe 视频/音频流、尺寸、fps、编解码器、完整解码、**音频流实际覆盖长度**和**容器时长**，不只检查 AAC 存在；时长容差取 `max(150 ms, 3000/fps)`。抽帧覆盖首尾、每镜头和转场附近；关键文字及内容由实际成片证据复核；证据不足为 needs_review。音频覆盖依据真实流的 duration/start_time 与容器 duration，不是逐采样点静音图，因此不能夸大为“每个采样点都无缺口”。正常速度下的基础效果仍以迁移前两版历史成片为准（本次未重渲染）；未声称慢放、变速或其他增强效果。
++验证检查非空、ffprobe 视频/音频流、尺寸、fps、编解码器、完整解码、**音频流实际覆盖长度**和**容器时长**，不只检查 AAC 存在；时长容差取 `max(100 ms, 2000/fps)`。抽帧覆盖首尾、每镜头和转场附近；关键文字及内容由实际成片证据复核；证据不足为 needs_review。音频覆盖依据真实流的 duration/start_time 与容器 duration，不是逐采样点静音图，因此不能夸大为“每个采样点都无缺口”。正常速度下的基础效果仍以迁移前两版历史成片为准（本次未重渲染）；未声称慢放、变速或其他增强效果。
+ 
+ 交付（历史目录 `runs/demo/`）包括：`assets.json`、`analysis.json`、`requirements_v1/v2.json`、`timeline_v1/v2.json`、`derived_v1/v2.json`、`output_v1/v2.mp4`、`validation_v1/v2.json`、`revision_diff.json`、`events.jsonl`、`usage.json`、`manifest.json`、两版 `agent_v*/checkpoint.json`、证据帧与 `commands/` 原始 argv/退出码/标准输出错误。失败候选和故障文件一并保留，禁止删除；`manifest.json` 不递归哈希自身，关联素材 SHA256。费用缺乏核实单价时为 null/unknown；历史 OpenAI 与当前 DeepSeek 的调用和费用必须分开统计。
+ 

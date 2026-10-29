@@ -1,4 +1,5 @@
 """Strict editable timeline schema and source/constraint semantic checks."""
+import re
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
@@ -103,13 +104,17 @@ def check(data, inventory, requirements):
     for c in t.captions:
         if not c.text or c.end_ms <= c.start_ms or c.end_ms > elapsed:
             raise ValueError(f'{c.caption_id}: caption outside movie')
+        if re.search(r'[{}<>\\\x00-\x1f\x7f]', c.text) or '-->' in c.text:
+            raise ValueError(f'{c.caption_id}: subtitle markup/ASS control sequences and control characters are unsupported')
     if t.bgm:
         a = assets.get(t.bgm.asset_id)
-        if not a or a['kind'] != 'audio' or t.bgm.start_ms >= elapsed or t.bgm.in_ms >= a['duration_ms'] or (not t.bgm.loop and elapsed - t.bgm.start_ms > a['duration_ms'] - t.bgm.in_ms) or t.bgm.fade_in_ms + t.bgm.fade_out_ms > elapsed - t.bgm.start_ms:
+        if not a or a['kind'] != 'audio' or t.bgm.start_ms >= elapsed or t.bgm.in_ms >= a['duration_ms'] or t.bgm.fade_in_ms + t.bgm.fade_out_ms > elapsed - t.bgm.start_ms:
             raise ValueError('BGM source/range/fades invalid')
+    title = next((c for c in t.captions if c.start_ms == 0), None)
+    ending = next((c for c in t.captions if c.end_ms == elapsed), None)
     actual = {'duration_ms': elapsed, 'width': t.output.width, 'height': t.output.height, 'fps': t.output.fps, 'container': t.output.container, 'video_codec': t.output.video_codec, 'audio_codec': t.output.audio_codec,
-              'clip_order': [c.kind for c in t.clips], 'title_text': next((c.text for c in t.captions if c.start_ms == 0), None), 'title_start_ms': 0, 'title_end_ms': next((c.end_ms for c in t.captions if c.start_ms == 0), None),
-              'ending_text': next((c.text for c in t.captions if c.end_ms == elapsed), None), 'ending_start_ms': next((c.start_ms for c in t.captions if c.end_ms == elapsed), None), 'ending_end_ms': elapsed,
+              'clip_order': [c.kind for c in t.clips], 'title_text': title.text if title else None, 'title_start_ms': title.start_ms if title else None, 'title_end_ms': title.end_ms if title else None,
+              'ending_text': ending.text if ending else None, 'ending_start_ms': ending.start_ms if ending else None, 'ending_end_ms': ending.end_ms if ending else None,
               'transition_type': t.clips[0].transition_out.type, 'transition_ms': t.clips[0].transition_out.duration_ms,
               'video_gain_db': [c.gain_db for c in t.clips if c.kind == 'video'], 'video_mute': [c.mute for c in t.clips if c.kind == 'video'],
               'bgm_gain_db': t.bgm.gain_db if t.bgm else None, 'bgm_fade_in_ms': t.bgm.fade_in_ms if t.bgm else None, 'bgm_fade_out_ms': t.bgm.fade_out_ms if t.bgm else None,

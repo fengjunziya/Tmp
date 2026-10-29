@@ -1,0 +1,10 @@
+--- a/D:\Tmp\renderer.py
++++ b/D:\Tmp\renderer.py
+@@ -1,6 +1,7 @@
+ """Compile validated data to a restricted FFmpeg graph; never accept arbitrary filters."""
+ import json
+ import html
++import re
+ import subprocess
+ import time
+ from pathlib import Path

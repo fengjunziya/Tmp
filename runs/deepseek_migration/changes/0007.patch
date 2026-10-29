@@ -1,0 +1,12 @@
+--- a/D:\Tmp\verify.py
++++ b/D:\Tmp\verify.py
+@@ -58,6 +58,9 @@
+           {'video': video, 'fps': actual_fps})
+     check('video_duration_ms', actual_ms is not None and abs(actual_ms-duration) <= max(100, 2000/t.output.fps), {'video_ms': actual_ms, 'container_ms': round(float(info['format']['duration'])*1000), 'expected_ms': duration})
+     check('audio_stream', bool(audio) and audio['codec_name'] == 'aac', audio)
++    coverage = media_duration_checks(info, duration, t.output.fps)
++    check('audio_duration_ms', coverage['audio_ok'], coverage)
++    check('container_duration_ms', coverage['container_ok'], coverage)
+     execute([config.ffmpeg, '-hide_banner', '-v', 'error', '-i', str(movie), '-f', 'null', '-'], run_dir, f'decode_v{t.version}', config.command_timeout_s)
+     check('full_decode', True, 'ffmpeg returned exit 0', evidence='commands/*decode*.result.json')
+     points = {0, max(0, duration-100), 1000, max(0, duration-1000)}

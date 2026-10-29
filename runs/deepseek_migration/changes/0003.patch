@@ -1,0 +1,11 @@
+--- a/D:\Tmp\video_agent.py
++++ b/D:\Tmp\video_agent.py
+@@ -299,7 +299,7 @@
+             return {'ok': True, 'accepted': True, 'output': str(output), 'validation': f'validation_v{version}.json'}
+         loop.handlers = {'submit_timeline': submit_timeline, 'inspect_interval': inspect_interval, 'render': render, 'verify': verify, 'finish': finish}
+         task = ('Plan, validate, render, verify, then finish version ' + str(version) + '. Full timeline JSON Schema: ' + json.dumps(schema, ensure_ascii=False) + '. Unrequested output fields default to config.output=' + json.dumps(config.output) + ', container=mp4, video_codec=libx264, audio_codec=aac; do not invent captions or BGM unless requested. Frozen requirements: ' + json.dumps(req, ensure_ascii=False) + '\nAssets: ' + json.dumps(assets, ensure_ascii=False) + '\nObservations: ' + json.dumps(read(run_dir/'analysis.json'), ensure_ascii=False) + '\nVersion 1 example feasible math: 7000ms video + 3500ms image - 500ms dissolve = 10000ms. Version 2 can use image 3500ms then video 7000ms; choose actual content based on evidence. These durations are suggestions, NOT superseding request. For each clip provide all nullable fields; final transition cut 0. BGM from audio asset. All captions are provided copy, not ASR. Submit full JSON timeline with schema_version 1.0, version, parent_version, request_ids, asset_manifest_hash, constraint_set_id, output, clips, captions, bgm. Use tools; text-only answer does not finish.')
+-        system = 'You are the video editing planner on gpt-6-sol/high. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
++        system = f'You are the video editing planner on {config.model}/{config.reasoning_effort}. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
+         result = loop.run(task, system_prompt=system)
+         logger.event('planning_result', result=result)
+         top_usage = read(run_dir / 'usage.json')

@@ -1,0 +1,6 @@
+video_agent.py []
+media.py []
+timeline.py []
+renderer.py []
+verify.py []
+README.md [(7, '用户最新明确：项目两个 Agent 只使用 **deepseek-flash**、**high** 推理等级，通过 **DEEPSEEK_API_KEY** 接入 **https://api.deepseek.com** 的 **Responses API**。这是当前唯一允许的运行时模型与凭据；**禁止使用 OPENAI_API_KEY，也不存在任何 OpenAI 或其他提供商的凭据回退**。缺少 `DEEPSEEK_API_KEY` 时直接明确失败。'), (18, '环境已验证 Windows、Python 3.13.7、Git、FFmpeg/ffprobe 8.1.2、openai SDK 2.44.0、pydantic 2.13.4。这里的 openai SDK 仅作为 Responses 协议传输层，显式使用 DeepSeek 官方端点和 `DEEPSEEK_API_KEY`，不读取 `OPENAI_API_KEY` 或 `OPENAI_BASE_URL`。兼容 Python 3.12+。FFmpeg 需要 libx264、AAC、subtitles/ASS、xfade，并安装可用中文字体。')]

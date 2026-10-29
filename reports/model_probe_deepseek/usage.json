@@ -1,0 +1,63 @@
+{
+  "provider": "deepseek",
+  "api_base": "https://api.deepseek.com",
+  "credential_env": "DEEPSEEK_API_KEY",
+  "model": "deepseek-flash",
+  "pricing": {
+    "currency": "USD",
+    "verified_on": null,
+    "input_per_million": null,
+    "cached_input_per_million": null,
+    "output_per_million": null
+  },
+  "calls": [
+    {
+      "timestamp": "2026-10-29T07:02:12.516+00:00",
+      "purpose": "deepseek_image_and_function_probe",
+      "attempt": 1,
+      "status": "failed",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 2.695,
+      "http_status": 400,
+      "request_id": null,
+      "error_type": "BadRequestError",
+      "error": "Error code: 400 - {'error': {'message': 'Thinking mode does not support this tool_choice (request_id: 8555b2cb-9304-4a59-a07d-db0ef92fd2b7)', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}",
+      "retryable": false,
+      "input_tokens": null,
+      "cached_input_tokens": null,
+      "output_tokens": null,
+      "reasoning_tokens": null,
+      "estimated_cost_usd": null
+    },
+    {
+      "timestamp": "2026-10-29T07:02:48.443+00:00",
+      "purpose": "deepseek_image_and_function_probe",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 2.442,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "f5d719c9-2a00-42ba-8218-4697771109d5",
+      "input_tokens": 904,
+      "cached_input_tokens": 0,
+      "output_tokens": 122,
+      "reasoning_tokens": 0,
+      "estimated_cost_usd": null
+    }
+  ],
+  "totals": {
+    "input_tokens": 904,
+    "cached_input_tokens": 0,
+    "output_tokens": 122,
+    "reasoning_tokens": 0,
+    "estimated_cost_usd": null
+  },
+  "cost_status": "unknown"
+}
