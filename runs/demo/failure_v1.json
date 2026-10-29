@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "reason": "A finish tool specification and handler are required",
+  "elapsed_s": 12.552873099979479,
+  "checkpoint": "agent_v1/checkpoint.json"
+}

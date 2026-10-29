@@ -1,0 +1,111 @@
+{
+  "assets": [
+    {
+      "asset_id": "ab9c1083346b42b1",
+      "summary": "Audio only; probe metadata, no visual evidence or semantic transcription.",
+      "observed_intervals": [],
+      "candidate_shots": [],
+      "evidence_frames": [],
+      "uncertainties": [
+        "Audio semantics not transcribed"
+      ],
+      "cache_key": "aeec50e2cf8a9d97563980cbe39ea8d4cd09dea41b72afaf28c728eb35888c39"
+    },
+    {
+      "asset_id": "5cade409858635d0",
+      "summary": "**Visible:** Each sampled frame is a flat graphic with a thin border, a large white label at upper left, and a small multicolored inset below it. The labels are `DEMO_01` at 0 and 2.5 s, `DEMO_02` at 5 s, and `DEMO_03` at 7.5 and 9.8 s. The backgrounds are blue, brown, and green respectively. The inset contains vertical color bands, a diagonal colored stripe, and small markings.\n\n**Possible shot choices:** A full-frame view of each labeled graphic, or a tighter crop on the inset.\n\n**Uncertainty:** These five frames do not establish how the labels change, whether the inset moves between samples, or what appears between the observed timestamps.",
+      "observed_intervals": [
+        {
+          "start_ms": 0,
+          "end_ms": 0,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 2500,
+          "end_ms": 2500,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 5000,
+          "end_ms": 5000,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 7500,
+          "end_ms": 7500,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 9800,
+          "end_ms": 9800,
+          "description": "Sampled point; see summary"
+        }
+      ],
+      "candidate_shots": [
+        {
+          "start_ms": 0,
+          "end_ms": 7000,
+          "status": "candidate, intervening content unobserved"
+        }
+      ],
+      "evidence_frames": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\demo\\frames\\sample_5cade409858635d0_0.jpg",
+          "sha256": "9acc4e48d3a507f23d132e227fa1c2fa12d76596222a78b59b7169323276ac49"
+        },
+        {
+          "time_ms": 2500,
+          "path": "D:\\Tmp\\runs\\demo\\frames\\sample_5cade409858635d0_2500.jpg",
+          "sha256": "441c46c6d0585e479f41ca6be810a4cbdeaab20da8930aa4bf1c0a4a6871e69b"
+        },
+        {
+          "time_ms": 5000,
+          "path": "D:\\Tmp\\runs\\demo\\frames\\sample_5cade409858635d0_5000.jpg",
+          "sha256": "0eba70b3b4107889186ff9d9cb2abca4a8a9c8edb3e8854888fe876bd985cd9d"
+        },
+        {
+          "time_ms": 7500,
+          "path": "D:\\Tmp\\runs\\demo\\frames\\sample_5cade409858635d0_7500.jpg",
+          "sha256": "e473468fff2e79d80eaf514d5532821e21af4707bf1e6a7239d11c7b59e8af85"
+        },
+        {
+          "time_ms": 9800,
+          "path": "D:\\Tmp\\runs\\demo\\frames\\sample_5cade409858635d0_9800.jpg",
+          "sha256": "d3237ee2e0c3979c14b36908bffcecf6d26b0f0809a0ad0204896df77fec054c"
+        }
+      ],
+      "uncertainties": [
+        "Content between sampled frames is not verified"
+      ],
+      "cache_key": "ded7c0c01ad4c65dae71ee582a8b57ddf384668f66128d206887cf6d5a65956c"
+    },
+    {
+      "asset_id": "6691b06721d38699",
+      "summary": "At 0 ms, the frame shows a flat graphic: a dark blue background with a teal inset border, white “DEMO_STILL” text near the upper left, and an ochre rectangle below it.\n\n**Possible shot choice:** A wide, static title-card composition with open space on the right.\n\n**Uncertainty:** This single sampled frame does not establish any movement, transitions, or other scenes.",
+      "observed_intervals": [
+        {
+          "start_ms": 0,
+          "end_ms": 0,
+          "description": "Sampled point; see summary"
+        }
+      ],
+      "candidate_shots": [
+        {
+          "status": "static image"
+        }
+      ],
+      "evidence_frames": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\demo\\frames\\sample_6691b06721d38699_0.jpg",
+          "sha256": "6843239560f47a293950825a194d423dfcbf269b0d44a6fd77169771ea5e89da"
+        }
+      ],
+      "uncertainties": [],
+      "cache_key": "3ff8eeca8f06a6f06d1a1b5d2d7ffd6fc26284367883dec9b3c1fb93ad42d26f"
+    }
+  ],
+  "sampling": "video point frames at 0, 2500, 5000, 7500, near end; no unseen intervals confirmed",
+  "asset_manifest_hash": "3cc725637e55f247a2384f2c5277a5a346103865175772ff47ca5a773f03e9f0"
+}

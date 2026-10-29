@@ -1,0 +1,14 @@
+--- a/timeline.py
++++ b/timeline.py
+@@ -118,7 +118,10 @@
+     for req in requirements['hard_constraints']:
+         key, expected = req['field'], req['expected']
+         got = actual.get(key)
+-        if key in ('video_gain_db', 'video_mute', 'fit'):
++        if key == 'transition_type' and expected == 'cross_dissolve':
++            # Requirements retain the natural-language semantic label; the wire schema calls this dissolve.
++            good = got == 'dissolve'
++        elif key in ('video_gain_db', 'video_mute', 'fit'):
+             good = bool(got) and all(x == expected for x in got)
+         elif key == 'clip_order':
+             good = got == expected

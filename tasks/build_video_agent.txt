@@ -1,0 +1,29 @@
+你是刚通过阶段 A 验收的通用 Coding Agent。现在自主开发视频剪辑 Agent，必须用现有文件工具写入并修复业务源码，用进程工具执行真实演示，保留完整证据。请高效完成；用户规定整个考核两小时，不做冗余测试或 GUI。
+
+先读取 docs/requirements.md、agent_core.py（分段读取以掌握实际接口）、config.example.json、examples/request_v1.txt、request_v2.txt、materials/demo/manifest.json 及 scripts/accept_video.py。agent_core.py 可复用 Config、load_config、EventLogger、ModelClient、AgentLoop、sha256_file。模型固定 gpt-6-sol，reasoning_effort high，不能更换或再派生其他 Agent；禁止任何直接或间接删除文件/文件夹，包括临时清理。禁止 git reset/clean、改写验收和读取密钥。不要修改阶段 A 核心和 scripts/accept_video.py；不要提交 Git（主执行者做）。所有新业务源码必须通过 write_file/replace_text 创建，不能把代码写在 run_process 的 Python -c 中，以保证来源追踪。允许的业务文件为 video_agent.py、media.py、timeline.py、renderer.py、verify.py；你可另写 tests/test_video.py 和 README.md（如需）。保持实现简单可运行，不要过度框架化。
+
+交付 CLI（都支持 --config config.example.json，默认可自动读取该文件）：
+python video_agent.py create --assets materials/demo --request examples/request_v1.txt --run-dir runs/demo --config config.example.json
+python video_agent.py revise --run-dir runs/demo --base-revision 1 --request examples/request_v2.txt --config config.example.json
+失败非零退出码，保存原因和检查点，不能把失败标为通过。支持重试/恢复已完成步骤，不覆盖已有通过版本。总模型调用预算和超时受 Config 控制，每版渲染首次后最多两次修复。
+
+视频业务必须真正用模型：共享 ModelClient 做画面视觉分析和自然语言需求提取；共享 AgentLoop 通过视频业务工具规划时间线、校验、渲染和验证。可以先以程序完成 ffprobe/抽帧/模型内容分析/需求提取，然后由 AgentLoop 使用 submit_timeline、inspect_interval、render、verify、finish 等工具完成决策闭环；不要用 if '标题' in text 这样的固定字符串模板冒充自然语言 Agent。工具返回真实错误，模型据此修复。独立工具输入采用 Pydantic 及语义校验；仅 finish 验证全部硬约束及实际成片后才完成。
+
+自然语言需求基准：requirements_vN.json 保留 request_id、raw_text、parent_request_id、hard_constraints（每条 requirement_id/field/expected/source_text）、soft_preferences、superseded_requirement_ids 和 acceptance。模型首次解析需求后基准冻结；第二版逐条保留原约束，只有新需求明确替代项可修改，并保存替代理由/原文。不要默默丢弃旧约束；未支持的正式要求给 needs_review 或失败。演示要求都是已明确可自动验证的字段，必须严格满足。需求文案字幕是真实给定文案，不需要 ASR；普通带对白/自动字幕请求需调用带时间戳的真实转录服务，没配置支持服务就清晰失败而非编造。不要调用其他模型来转录（用户所有子代理模型限制）；可以实现可配置 ASR HTTP 接入，未配置时失败。声明演示无对白、不触发 ASR。
+
+素材模块 media.py：ffprobe 扫描常见视频/图片/音频，忽略 manifest/json 等非素材。assets.json 顶层 {asset_root, assets:[...], manifest_hash}，资产行包含 asset_id（哈希稳定）、relative_path、sha256、kind video/image/audio、duration_ms（图片为null）、width/height/fps/rotation/has_audio 及原始探测摘要。不把音频当视频。按实际哈希+采样参数缓存分析。视频默认每 2–5 秒采帧，包括开头和接近尾部，图片本身缩略；有实际时间点和证据路径。使用 ModelClient.respond 携带 input_image base64 及相应文本时间点，分析真实可见内容，保存 analysis.json 中 assets 数组，含 summary、observed_intervals、candidate_shots、evidence_frames、uncertainties，不把稀疏未观察区间当已确认。inspect_interval(asset_id,start_ms,end_ms,interval_ms) 可加密抽帧给模型分析；不得编造。音频无画面，用探测信息且诚实说明未做语义转录。
+
+数据时间线 timeline.py：Pydantic 模型（extra='forbid'）、结构与语义校验。使用 JSON 输出：schema_version='1.0'、version、parent_version、request_ids、asset_manifest_hash、constraint_set_id、output、clips、captions、bgm。output width/height/fps/container='mp4'/video_codec='libx264'/audio_codec='aac'；clips: clip_id,asset_id,kind,in_ms/out_ms(视频整数，图片null),duration_ms(图片整数，视频null),fit pad/crop,mute,gain_db,transition_out {type cut/fade/dissolve,duration_ms整数}。captions: caption_id,start_ms,end_ms,text,style_id='default_zh'。bgm: asset_id,in_ms,start_ms,gain_db,loop,fade_in_ms,fade_out_ms，或 null。
+全部时间非负整数毫秒（拒绝bool/浮点时间）。视频源区间 [in_ms,out_ms) 合法且不越界，图像显示时长>0。不得重复 clip_id/字幕 ID，不得引用音频作为镜头。最后一个镜头不能 dissolve。cut时长0，fade是镜头内部淡黑不增加片长；dissolve真实相邻交叠，且中间镜头两侧交叠之和不超过时长。计算片长=sum镜头时长-dissolve重叠；字幕/BGM用成片时间轴且不能越界。产出自动 clip_positions 和 computed_duration_ms 可作为独立派生报告（若写入 timeline 则 schema允许这些字段），模型不得填写伪造派生值。硬约束逐条校验与 requirement_id 关联；包括时长、输出参数、标题时间/文字、结尾字幕、顺序、转场500ms、BGM/原声增益、pad等。
+
+renderer.py：仅将验证过的结构编译为 FFmpeg argv 与 filter_complex，不能执行模型提供的任意滤镜。先单个正常滤镜链规范输入 trim/setpts/scale+pad或crop/setsar/fps/format/settb，再按 cut concat、fade内部淡黑、dissolve xfade 和相应 acrossfade，同步音视频。无音轨用 anullsrc 补齐；原声 mute/gain；BGM 源入点、成片起点、音量、循环、淡入淡出并按最终片长截断。音频统一48000Hz/stereo。中文 ASS/SRT 安全转义，使用 Microsoft YaHei 和可用字体，按真正成片时间轴烧字幕。Windows 字体/字幕路径冒号须正确转义，优先 cwd run_dir + 相对字幕文件名。FFmpeg xfade 需要相同分辨率/fps/pixel format/time base，出现兼容问题可标准化中间片段后重试，不能静默删效果。建议滤镜线程设为1减少平台差异。媒体输出写 output_vN.pending.mp4，成功验证后才原子 replace 为 output_vN.mp4。文件日志落 commands/；不要删除临时文件，保留失败日志/参数/候选时间线。渲染尽量短，演示10秒 CPU H264 veryfast 即可。
+
+verify.py：先检查非空，再 ffprobe 对视频流宽高、fps、codec、视频流时长（并另存容器时长）、AAC音频和完整解码 ffmpeg -v error -i ... -f null - 做检查。时长容差=max(100ms,2帧)。抽出实际成片首尾、字幕时间、每镜头中点与转场前后证据帧。对关键字幕/镜头顺序做真实成片视觉复核（ModelClient 图像输入）；字幕文字可见与时间位置，BGM/原声用时间线+实际音轨/能量或受控合成源证据做合理针对验证，不能声称逐帧内容保证。validation_vN.json 顶层 version,status(pass/fail/needs_review),checks 各含 check_id,requirement_id,status,actual,evidence。硬约束 needs_review 不可标pass。实际通过演示可给pass，但不能以渲染命令成功代替验证。
+
+保留 runs/demo 下 assets.json、analysis.json、requirements_v1/v2.json、timeline_v1/v2.json、output_v1/v2.mp4、validation_v1/v2.json、revision_diff.json、events.jsonl、commands、usage.json、manifest.json。manifest 包含每个交付文件path/sha256与源文件关联（不能递归hash manifest自己）；usage来自真实调用，未知费用null不零。revision_diff说明需求替代、镜头排序/字幕变化及旧硬约束保留。v2重用未变素材分析，不能覆盖v1。
+
+演示素材已在 materials/demo：source_10s.mp4 为真实10s动态合成片，still.png为图片，bgm.wav为10s音乐。原请求和追加请求是 examples 中全文，10秒成片可选视频7秒+图片3.5秒-0.5秒交叠=10秒；v2倒换镜头仍满足。不要将该建议当现场规定；需求本身优先。
+
+请先生成完整最小业务实现（约5个文件），调用真实 create 和 revise 完成演示；如果错误，用工具修复源代码再重跑。避免先写大量单测延误。可使用 tests/test_video.py 做最少时间线语义检查，但不是必须。渲染失败要记入事件和反馈以证明AC08；如首次没有自然失败，构建一个显式故障演示命令（例如故意无效字体路径/无效编码器然后按正确配置恢复）且标记故障注入来源，不能捏造失败。
+
+独立不可变验收入口：python scripts/accept_video.py。它会检查业务源码、两版真实素材/需求/时间线/片长/标题/音量/排序/转场/验证结论/成片等。不能修改这个脚本或验收基准。只有 create、revise 均真实完成并且独立验收通过后调用 finish。输出已完成/未完成项及证据路径，不要以文字替代执行。

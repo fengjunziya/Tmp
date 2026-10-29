@@ -1,0 +1,85 @@
+{
+  "asset_root": "D:\\Tmp\\materials\\demo",
+  "assets": [
+    {
+      "asset_id": "ab9c1083346b42b1",
+      "relative_path": "bgm.wav",
+      "sha256": "bf64f5fb0ca855b56d01f985c43383b5f7b35dd9478e43be8b69b3f6fe089340",
+      "kind": "audio",
+      "duration_ms": 10000,
+      "width": null,
+      "height": null,
+      "fps": null,
+      "rotation": 0,
+      "has_audio": true,
+      "probe_summary": {
+        "format_name": "wav",
+        "streams": [
+          {
+            "codec_type": "audio",
+            "codec_name": "pcm_s16le",
+            "duration": "10.000000",
+            "sample_rate": "48000",
+            "channel_layout": null
+          }
+        ]
+      }
+    },
+    {
+      "asset_id": "5cade409858635d0",
+      "relative_path": "source_10s.mp4",
+      "sha256": "828d8b133fae77c39e95886353c762d1828ffd78a80d3e216a451be8ddfe4c9e",
+      "kind": "video",
+      "duration_ms": 10000,
+      "width": 1280,
+      "height": 720,
+      "fps": "30/1",
+      "rotation": 0,
+      "has_audio": true,
+      "probe_summary": {
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "h264",
+            "duration": "10.000000",
+            "sample_rate": null,
+            "channel_layout": null
+          },
+          {
+            "codec_type": "audio",
+            "codec_name": "aac",
+            "duration": "10.000000",
+            "sample_rate": "48000",
+            "channel_layout": "mono"
+          }
+        ]
+      }
+    },
+    {
+      "asset_id": "6691b06721d38699",
+      "relative_path": "still.png",
+      "sha256": "f8a9e018a6348e33355307a6946837bf5c52cf6cd3f32142c25aaefc0f012bbf",
+      "kind": "image",
+      "duration_ms": null,
+      "width": 1280,
+      "height": 720,
+      "fps": null,
+      "rotation": 0,
+      "has_audio": false,
+      "probe_summary": {
+        "format_name": "png_pipe",
+        "streams": [
+          {
+            "codec_type": "video",
+            "codec_name": "png",
+            "duration": null,
+            "sample_rate": null,
+            "channel_layout": null
+          }
+        ]
+      }
+    }
+  ],
+  "manifest_hash": "3cc725637e55f247a2384f2c5277a5a346103865175772ff47ca5a773f03e9f0"
+}

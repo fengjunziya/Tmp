@@ -1,0 +1,11 @@
+[
+  "ffmpeg",
+  "-hide_banner",
+  "-v",
+  "error",
+  "-i",
+  "D:\\Tmp\\runs\\demo\\output_v1.pending.mp4",
+  "-f",
+  "null",
+  "-"
+]

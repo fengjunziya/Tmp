@@ -6,9 +6,11 @@
   "user_demo_authorization": "User explicitly allowed self-made 10 second demo material.",
   "model": "gpt-6-sol",
   "reasoning_effort": "high",
-  "stage": "A",
+  "stage": "B",
   "user_time_budget_minutes": 120,
   "stage_a_verified_at": "2026-10-29T06:34:08.290544+00:00",
   "stage_a_result": "runs/stage_a/result.json",
-  "phase_b_sources_exist": false
+  "phase_b_sources_exist": false,
+  "stage_a_commit": "289150cda6649c008631506570b61ef403a0d4f3",
+  "stage_b_started_at": "2026-10-29T06:38:36.464632+00:00"
 }

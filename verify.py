@@ -1,0 +1,71 @@
+"""Probe, fully decode, and visually inspect the actual pending encoded movie."""
+import base64
+import json
+from pathlib import Path
+from media import probe
+from renderer import execute
+
+
+def verify(pending, t, derived, inventory, requirements, config, run_dir, model):
+    movie = Path(pending)
+    if not movie.is_file() or movie.stat().st_size <= 10000:
+        raise ValueError('Movie is missing or empty')
+    info = probe(movie, config)
+    video = next((s for s in info['streams'] if s['codec_type'] == 'video'), None)
+    audio = next((s for s in info['streams'] if s['codec_type'] == 'audio'), None)
+    duration = derived['computed_duration_ms']
+    actual_ms = round(float(video.get('duration', info['format']['duration'])) * 1000) if video else None
+    fps = video.get('avg_frame_rate', '0/0') if video else '0/0'
+    numer, denom = map(int, fps.split('/'))
+    actual_fps = numer / denom if denom else 0
+    checks = []
+    def check(name, condition, actual, req=None, evidence=None):
+        checks.append({'check_id': name, 'requirement_id': req, 'status': 'pass' if condition else 'fail', 'actual': actual, 'evidence': evidence or str(movie)})
+    check('nonempty', movie.stat().st_size > 10000, movie.stat().st_size)
+    check('video_stream', bool(video) and video['width'] == t.output.width and video['height'] == t.output.height and video['codec_name'] == 'h264' and abs(actual_fps-t.output.fps) < .01,
+          {'video': video, 'fps': actual_fps})
+    check('video_duration_ms', actual_ms is not None and abs(actual_ms-duration) <= max(100, 2000/t.output.fps), {'video_ms': actual_ms, 'container_ms': round(float(info['format']['duration'])*1000), 'expected_ms': duration})
+    check('audio_stream', bool(audio) and audio['codec_name'] == 'aac', audio)
+    execute([config.ffmpeg, '-hide_banner', '-v', 'error', '-i', str(movie), '-f', 'null', '-'], run_dir, f'decode_v{t.version}', config.command_timeout_s)
+    check('full_decode', True, 'ffmpeg returned exit 0', evidence='commands/*decode*.result.json')
+    points = {0, max(0, duration-100), 1000, max(0, duration-1000)}
+    for pos in derived['clip_positions']:
+        points.add((pos['start_ms'] + pos['end_ms']) // 2)
+        points.add(max(0, pos['end_ms']-150))
+        points.add(min(duration-100, pos['end_ms']+150))
+    folder = Path(run_dir) / 'verification_frames'
+    folder.mkdir(exist_ok=True)
+    frames = []
+    for ms in sorted(p for p in points if 0 <= p < duration):
+        frame = folder / f'v{t.version}_{ms}.jpg'
+        execute([config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-ss', f'{ms/1000:.3f}', '-i', str(movie), '-frames:v', '1', '-q:v', '3', str(frame)], run_dir, f'frame_v{t.version}_{ms}', config.command_timeout_s)
+        frames.append({'time_ms': ms, 'path': str(frame)})
+    title = next(c.text for c in t.captions if c.start_ms == 0)
+    ending = next(c.text for c in t.captions if c.end_ms == duration)
+    first = t.clips[0].kind
+    content = [{'type': 'input_text', 'text': f'Inspect ONLY these frames sampled from the ACTUAL encoded movie. Title at 1000ms should visually read exactly {title!r}; ending at 9000ms should read exactly {ending!r}. First clip type is {first} (static image has DEMO_STILL; video has dynamic DEMO_01/02/03). Inspect first/last order. Return only JSON with booleans title_visible, ending_visible, order_visible and uncertainty; do not claim unobserved frames verified.'}]
+    for ms in (1000, 9000, 100):
+        frame = min(frames, key=lambda x: abs(x['time_ms']-ms))
+        content += [{'type': 'input_text', 'text': f"Movie timestamp {frame['time_ms']}ms evidence {frame['path']}"}, {'type': 'input_image', 'image_url': 'data:image/jpeg;base64,' + base64.b64encode(Path(frame['path']).read_bytes()).decode()}]
+    result = model.respond([{'role': 'user', 'content': content}], purpose='encoded_movie_visual_review').output_text
+    try:
+        observed = json.loads(result.strip().removeprefix('```json').removesuffix('```').strip())
+    except ValueError:
+        observed = {'uncertainty': result}
+    for key in ('title_visible', 'ending_visible', 'order_visible'):
+        check('visual_'+key, observed.get(key) is True, observed, evidence=frames)
+    for req in requirements['hard_constraints']:
+        field = req['field']
+        associated = ['video_stream', 'video_duration_ms', 'audio_stream', 'full_decode']
+        if field.startswith('title_'):
+            associated += ['visual_title_visible']
+        if field.startswith('ending_'):
+            associated += ['visual_ending_visible']
+        if field == 'clip_order':
+            associated += ['visual_order_visible']
+        if field in ('bgm_gain_db', 'video_gain_db', 'video_mute', 'bgm_fade_in_ms', 'bgm_fade_out_ms'):
+            evidence = {'validated_timeline': f'timeline_v{t.version}.json', 'controlled_source_graph': 'commands/*render*.argv.json', 'decoded_audio': bool(audio)}
+        else:
+            evidence = {'timeline_semantic_check': next(c for c in derived['constraint_checks'] if c['requirement_id'] == req['requirement_id']), 'movie_frames': frames if field in ('clip_order', 'title_text', 'ending_text') else []}
+        check('hard_'+req['requirement_id'], all(next(c for c in checks if c['check_id'] == n)['status'] == 'pass' for n in associated), {'field': field, 'expected': req['expected']}, req['requirement_id'], evidence)
+    return {'version': t.version, 'status': 'pass' if all(c['status'] == 'pass' for c in checks) else 'needs_review', 'checks': checks, 'probe': {'video_duration_ms': actual_ms, 'container_duration_ms': round(float(info['format']['duration'])*1000)}, 'visual_review_raw': result, 'sampled_frames': frames, 'limitations': ['Sampled visual frames do not establish every intermediate frame', 'Gain is verified by controlled source graph and encoded audio presence, not isolated-source waveform separation']}

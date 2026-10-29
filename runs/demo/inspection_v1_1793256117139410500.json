@@ -1,0 +1,98 @@
+{
+  "asset_id": "5cade409858635d0",
+  "summary": "**Visible:** Each sampled frame is a full-screen graphic with a thin rectangular border, a large white label at upper left, and a small multicolored inset below it. The 0–3000 ms samples show “DEMO_01” on dark blue; 4000–6000 ms show “DEMO_02” on brown; the 6999 ms sample shows “DEMO_03” on green. The inset contains vertical color bands, small markings, and a diagonal multicolored stripe whose position differs across samples.\n\n**Possible shot choices:** A static, wide title-card composition with a small picture-in-picture graphic.\n\n**Uncertainty:** These point samples do not establish when or how the cards change, or what happens between frames. The inset’s markings are too small to identify confidently.",
+  "observed_intervals": [
+    {
+      "start_ms": 0,
+      "end_ms": 0,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 1000,
+      "end_ms": 1000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 2000,
+      "end_ms": 2000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 3000,
+      "end_ms": 3000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 4000,
+      "end_ms": 4000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 5000,
+      "end_ms": 5000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6000,
+      "end_ms": 6000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6999,
+      "end_ms": 6999,
+      "description": "Sampled point; see summary"
+    }
+  ],
+  "candidate_shots": [
+    {
+      "start_ms": 0,
+      "end_ms": 7000,
+      "status": "candidate, intervening content unobserved"
+    }
+  ],
+  "evidence_frames": [
+    {
+      "time_ms": 0,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_0.jpg",
+      "sha256": "9acc4e48d3a507f23d132e227fa1c2fa12d76596222a78b59b7169323276ac49"
+    },
+    {
+      "time_ms": 1000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_1000.jpg",
+      "sha256": "45fadfc03d11596bc45bb46a8c680bc191e51084a262daf09b26d3060ee9c235"
+    },
+    {
+      "time_ms": 2000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_2000.jpg",
+      "sha256": "f0903611563c2abd2427225ff042ae5230935d7f6aa296fed18e7193d0c94e9c"
+    },
+    {
+      "time_ms": 3000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_3000.jpg",
+      "sha256": "c1d235be384eb7191237aebf20f5b16431e2d0d33f22c4edf50d5d3ac9aee402"
+    },
+    {
+      "time_ms": 4000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_4000.jpg",
+      "sha256": "10c9820f37ec4839e9bfa55498611f0e25322b7aab02bcfed0d02846d8c4f5b6"
+    },
+    {
+      "time_ms": 5000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_5000.jpg",
+      "sha256": "0eba70b3b4107889186ff9d9cb2abca4a8a9c8edb3e8854888fe876bd985cd9d"
+    },
+    {
+      "time_ms": 6000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_6000.jpg",
+      "sha256": "f5b3a0ae43b92dc378b568b12a8bab12e8c3780daed5a8958166dd4d32c9b5ae"
+    },
+    {
+      "time_ms": 6999,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256109861434500_5cade409858635d0_6999.jpg",
+      "sha256": "f16fa3ed0239040b1a602cde4ed83ffdb8e2588950ef28fb13a1d23bdcabdeb3"
+    }
+  ],
+  "uncertainties": [
+    "Content between sampled frames is not verified"
+  ]
+}

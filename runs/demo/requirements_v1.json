@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "request_id": "request_v1_d30ddbdd2632",
+  "raw_text": "使用演示素材制作一支 10 秒的视频。画幅 1280×720，30fps，MP4/H.264/AAC。开头使用动态视频，结尾使用静态图片，两个镜头之间用 500 毫秒交叉溶解；按实际片长计算选段长度。0–3 秒显示中文标题“十秒灵感”，最后 2 秒显示“由视频 Agent 自动剪辑”。保留视频原声并降低到 -18dB；加入提供的 BGM，音量 -20dB，开头和结尾各淡入淡出 500 毫秒。画面等比例加边，不要拉伸。",
+  "parent_request_id": null,
+  "request_ids": [
+    "request_v1_d30ddbdd2632"
+  ],
+  "hard_constraints": [
+    {
+      "requirement_id": "R1_duration_ms",
+      "field": "duration_ms",
+      "expected": 10000,
+      "source_text": "10 秒的视频"
+    },
+    {
+      "requirement_id": "R1_width",
+      "field": "width",
+      "expected": 1280,
+      "source_text": "画幅 1280×720"
+    },
+    {
+      "requirement_id": "R1_height",
+      "field": "height",
+      "expected": 720,
+      "source_text": "画幅 1280×720"
+    },
+    {
+      "requirement_id": "R1_fps",
+      "field": "fps",
+      "expected": 30,
+      "source_text": "30fps"
+    },
+    {
+      "requirement_id": "R1_container",
+      "field": "container",
+      "expected": "mp4",
+      "source_text": "MP4/H.264/AAC"
+    },
+    {
+      "requirement_id": "R1_video_codec",
+      "field": "video_codec",
+      "expected": "libx264",
+      "source_text": "MP4/H.264/AAC"
+    },
+    {
+      "requirement_id": "R1_audio_codec",
+      "field": "audio_codec",
+      "expected": "aac",
+      "source_text": "MP4/H.264/AAC"
+    },
+    {
+      "requirement_id": "R1_clip_order",
+      "field": "clip_order",
+      "expected": [
+        "video",
+        "image"
+      ],
+      "source_text": "开头使用动态视频，结尾使用静态图片"
+    },
+    {
+      "requirement_id": "R1_title_text",
+      "field": "title_text",
+      "expected": "十秒灵感",
+      "source_text": "0–3 秒显示中文标题“十秒灵感”"
+    },
+    {
+      "requirement_id": "R1_title_start_ms",
+      "field": "title_start_ms",
+      "expected": 0,
+      "source_text": "0–3 秒显示中文标题“十秒灵感”"
+    },
+    {
+      "requirement_id": "R1_title_end_ms",
+      "field": "title_end_ms",
+      "expected": 3000,
+      "source_text": "0–3 秒显示中文标题“十秒灵感”"
+    },
+    {
+      "requirement_id": "R1_ending_text",
+      "field": "ending_text",
+      "expected": "由视频 Agent 自动剪辑",
+      "source_text": "最后 2 秒显示“由视频 Agent 自动剪辑”"
+    },
+    {
+      "requirement_id": "R1_ending_start_ms",
+      "field": "ending_start_ms",
+      "expected": 8000,
+      "source_text": "最后 2 秒显示“由视频 Agent 自动剪辑”"
+    },
+    {
+      "requirement_id": "R1_ending_end_ms",
+      "field": "ending_end_ms",
+      "expected": 10000,
+      "source_text": "10 秒的视频"
+    },
+    {
+      "requirement_id": "R1_transition_type",
+      "field": "transition_type",
+      "expected": "cross_dissolve",
+      "source_text": "两个镜头之间用 500 毫秒交叉溶解"
+    },
+    {
+      "requirement_id": "R1_transition_ms",
+      "field": "transition_ms",
+      "expected": 500,
+      "source_text": "500 毫秒交叉溶解"
+    },
+    {
+      "requirement_id": "R1_video_gain_db",
+      "field": "video_gain_db",
+      "expected": -18,
+      "source_text": "保留视频原声并降低到 -18dB"
+    },
+    {
+      "requirement_id": "R1_video_mute",
+      "field": "video_mute",
+      "expected": false,
+      "source_text": "保留视频原声"
+    },
+    {
+      "requirement_id": "R1_bgm_gain_db",
+      "field": "bgm_gain_db",
+      "expected": -20,
+      "source_text": "加入提供的 BGM，音量 -20dB"
+    },
+    {
+      "requirement_id": "R1_bgm_fade_in_ms",
+      "field": "bgm_fade_in_ms",
+      "expected": 500,
+      "source_text": "开头和结尾各淡入淡出 500 毫秒"
+    },
+    {
+      "requirement_id": "R1_bgm_fade_out_ms",
+      "field": "bgm_fade_out_ms",
+      "expected": 500,
+      "source_text": "开头和结尾各淡入淡出 500 毫秒"
+    },
+    {
+      "requirement_id": "R1_fit",
+      "field": "fit",
+      "expected": "pad",
+      "source_text": "画面等比例加边，不要拉伸"
+    }
+  ],
+  "soft_preferences": [],
+  "superseded_requirement_ids": [],
+  "supersession_reasons": [],
+  "acceptance": {
+    "status": "frozen",
+    "automatic_fields": [
+      "duration_ms",
+      "width",
+      "height",
+      "fps",
+      "container",
+      "video_codec",
+      "audio_codec",
+      "clip_order",
+      "title_text",
+      "title_start_ms",
+      "title_end_ms",
+      "ending_text",
+      "ending_start_ms",
+      "ending_end_ms",
+      "transition_type",
+      "transition_ms",
+      "video_gain_db",
+      "video_mute",
+      "bgm_gain_db",
+      "bgm_fade_in_ms",
+      "bgm_fade_out_ms",
+      "fit"
+    ],
+    "dialogue": "none in synthetic demo",
+    "unsupported_requirements": []
+  },
+  "constraint_set_id": "d575b2c651ce56d735053da5ccd42a05b4dcbbc86f595b4a5ed44935f6c2b0da"
+}

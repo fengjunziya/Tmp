@@ -1,0 +1,11 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -230,7 +230,7 @@
+         manifest(run_dir, assets)
+     except Exception as exc:
+         logger.event('pipeline_failed', error_type=type(exc).__name__, error=str(exc))
+-        save(run_dir / f'failure_v{version}.json', {'status': 'failed', 'reason': str(exc), 'elapsed_s': time.monotonic()-started, 'checkpoint': f'agent_v{version}/checkpoint.json'})
++        save(run_dir / f'failure_v{version}_{time.time_ns()}.json', {'status': 'failed', 'reason': str(exc), 'elapsed_s': time.monotonic()-started, 'checkpoint': str(locals().get('loop_dir', run_dir / f'agent_v{version}'))})
+         raise
+ 
+ 

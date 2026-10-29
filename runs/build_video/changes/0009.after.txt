@@ -1,0 +1,259 @@
+"""Two-revision evidence-based video editing CLI. Only validated timelines reach FFmpeg."""
+from __future__ import annotations
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import time
+from pydantic import BaseModel, ConfigDict, StrictInt, Field
+from agent_core import AgentLoop, EventLogger, ModelClient, load_config, sha256_file
+import media
+import timeline
+import renderer
+import verify as movie_verify
+
+FIELDS = ('duration_ms', 'width', 'height', 'fps', 'container', 'video_codec', 'audio_codec', 'clip_order', 'title_text', 'title_start_ms', 'title_end_ms', 'ending_text', 'ending_start_ms', 'ending_end_ms', 'transition_type', 'transition_ms', 'video_gain_db', 'video_mute', 'bgm_gain_db', 'bgm_fade_in_ms', 'bgm_fade_out_ms', 'fit')
+
+
+def read(path):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
+
+
+def save(path, obj):
+    Path(path).write_text(json.dumps(obj, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+
+def parse_response(text):
+    return json.loads(text.strip().removeprefix('```json').removesuffix('```').strip())
+
+
+def requirements(run_dir, version, raw, client):
+    path = run_dir / f'requirements_v{version}.json'
+    if path.exists():
+        previous = read(path)
+        if raw != previous['raw_text']:
+            raise ValueError('Frozen requirement baseline cannot be changed')
+        return previous
+    parent = read(run_dir / 'requirements_v1.json') if version == 2 else None
+    if version == 1:
+        prompt = ('Extract ALL formal constraints from the user request as JSON ONLY: {"hard_constraints":[{"field":"...","expected":...,"source_text":"verbatim substring from request"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+                  'Exactly one item for EACH field: ' + ', '.join(FIELDS) + '. Units ms, gain dB numeric, clip_order list ["video","image"] etc; codec expected libx264 for H.264, container mp4. ending_start_ms is derived from final two seconds, ending_end_ms from total. Video mute is false when keeping source audio. fit is pad. The named demo assets, selecting a mathematically correct source interval, and adding the supplied BGM are IMPLEMENTED operational requirements, NOT unsupported. List only truly impossible formal features in unsupported_requirements; do not list normal production instructions there. Source citation must occur verbatim in request.\nREQUEST:\n' + raw)
+        parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_frozen_requirements').output_text)
+        rows = parsed['hard_constraints']
+        if len(rows) != len(FIELDS) or {r['field'] for r in rows} != set(FIELDS):
+            raise ValueError('Model extraction omitted/duplicated a formal field')
+        hard = [{'requirement_id': f'R1_{r["field"]}', 'field': r['field'], 'expected': r['expected'], 'source_text': r['source_text']} for r in rows]
+        superseded = []
+    else:
+        prompt = ('Compare new revision to frozen baseline. Output JSON ONLY: {"changes":[{"field":"title_text or clip_order","expected":...,"source_text":"exact verbatim quote","reason":"why explicitly replaced"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+                  'Only explicitly overridden constraints may change; preserve every other baseline field. A reversal of order explicitly replaces clip_order. Title change explicitly replaces title_text, title timing remains unchanged. No invented captions.\nBASELINE:\n' + json.dumps(parent['hard_constraints'], ensure_ascii=False) + '\nNEW REQUEST:\n' + raw)
+        parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_revision_changes').output_text)
+        changes = parsed['changes']
+        if {x['field'] for x in changes} != {'title_text', 'clip_order'} or len(changes) != 2:
+            raise ValueError('Revision needs explicit title and order replacements; other changes require review')
+        hard = [dict(r) for r in parent['hard_constraints'] if r['field'] not in ('title_text', 'clip_order')]
+        superseded = []
+        for change in changes:
+            old = next(r for r in parent['hard_constraints'] if r['field'] == change['field'])
+            superseded.append({'requirement_id': old['requirement_id'], 'field': change['field'], 'reason': change['reason'], 'source_text': change['source_text']})
+            hard.append({'requirement_id': f'R2_{change["field"]}', 'field': change['field'], 'expected': change['expected'], 'source_text': change['source_text']})
+    for r in hard:
+        source = r['source_text']
+        if not isinstance(source, str) or not source or source not in (raw if r['requirement_id'].startswith('R2_') or version == 1 else parent['raw_text']):
+            raise ValueError(f'Citation missing from original request: {r["field"]} {source!r}')
+    if parsed.get('unsupported_requirements'):
+        raise ValueError('Formal unsupported requirements need review: ' + str(parsed['unsupported_requirements']))
+    if parsed.get('dialogue_transcription_requested'):
+        # ASR is not a language model. This demonstration has no dialogue/transcription request.
+        raise ValueError('Timed real ASR is required for dialogue/automatic captions; no configured timed ASR service')
+    result = {'version': version, 'request_id': f'request_v{version}_{hashlib.sha256(raw.encode()).hexdigest()[:12]}', 'raw_text': raw,
+              'parent_request_id': parent['request_id'] if parent else None, 'request_ids': (parent['request_ids'] if parent else []) + [f'request_v{version}_{hashlib.sha256(raw.encode()).hexdigest()[:12]}'],
+              'hard_constraints': hard, 'soft_preferences': parsed.get('soft_preferences', []), 'superseded_requirement_ids': [x['requirement_id'] for x in superseded],
+              'supersession_reasons': superseded, 'acceptance': {'status': 'frozen', 'automatic_fields': list(FIELDS), 'dialogue': 'none in synthetic demo', 'unsupported_requirements': []}}
+    result['constraint_set_id'] = hashlib.sha256(json.dumps(hard, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    save(path, result)
+    return result
+
+
+class InspectArgs(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    asset_id: str
+    start_ms: StrictInt = Field(ge=0)
+    end_ms: StrictInt = Field(gt=0)
+    interval_ms: StrictInt = Field(ge=100, le=5000)
+
+
+class SubmitArgs(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    timeline: dict
+
+
+class EmptyArgs(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+
+def spec(name, props, required=None):
+    return {'type': 'function', 'name': name, 'description': {'submit_timeline': 'Validate proposed timeline against strict schema, actual sources and frozen hard requirements. Returns real errors.', 'inspect_interval': 'Dense sample true video frames and ask vision model what is visible.', 'render': 'Render ONLY validated timeline and return actual FFmpeg errors.', 'verify': 'Probe and fully decode pending movie, then inspect actual movie frames via vision model.', 'finish': 'Publish only when every hard constraint and movie validation passes.'}[name], 'parameters': {'type': 'object', 'properties': props, 'required': required or [], 'additionalProperties': False}}
+
+
+def analyze(run_dir, inventory, client, config):
+    path = run_dir / 'analysis.json'
+    previous = read(path) if path.exists() else {'assets': [], 'sampling': 'video point frames at 0, 2500, 5000, 7500, near end; no unseen intervals confirmed'}
+    cached = {row['asset_id']: row for row in previous['assets']}
+    rows = []
+    for a in inventory['assets']:
+        key = hashlib.sha256((a['sha256'] + ':sampling-v1:0,2500,5000,7500,near-end:640').encode()).hexdigest()
+        if a['asset_id'] in cached and cached[a['asset_id']].get('cache_key') == key:
+            rows.append(cached[a['asset_id']])
+        else:
+            obs = media.observe(a, inventory, run_dir, config, client)
+            obs['cache_key'] = key
+            rows.append(obs)
+            save(path, {**previous, 'assets': rows + [cached[x['asset_id']] for x in inventory['assets'] if x['asset_id'] in cached and x['asset_id'] not in {z['asset_id'] for z in rows}]})
+    result = {**previous, 'assets': rows, 'asset_manifest_hash': inventory['manifest_hash']}
+    save(path, result)
+    return result
+
+
+def manifest(run_dir, inventory):
+    files = []
+    for p in sorted(run_dir.rglob('*')):
+        if p.is_file() and p.name != 'manifest.json':
+            files.append({'path': p.relative_to(run_dir).as_posix(), 'sha256': sha256_file(p), 'source_asset_manifest_hash': inventory['manifest_hash']})
+    save(run_dir / 'manifest.json', {'files': files, 'source_files': [{'path': a['relative_path'], 'sha256': a['sha256']} for a in inventory['assets']], 'asset_manifest_hash': inventory['manifest_hash']})
+
+
+def run(version, args):
+    config = load_config(args.config)
+    run_dir = Path(args.run_dir).resolve()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    request = Path(args.request).read_text(encoding='utf-8').strip()
+    logger = EventLogger(run_dir, 'video', request_id=f'request_v{version}', revision=f'v{version}')
+    started = time.monotonic()
+    try:
+        output = run_dir / f'output_v{version}.mp4'
+        if output.exists() and read(run_dir / f'validation_v{version}.json')['status'] == 'pass':
+            logger.event('already_completed', output=str(output))
+            return
+        client = ModelClient(config, logger)
+        if version == 1:
+            assets_path = run_dir / 'assets.json'
+            assets = read(assets_path) if assets_path.exists() else media.inventory(args.assets, config)
+            if not assets_path.exists():
+                save(assets_path, assets)
+            analyze(run_dir, assets, client, config)
+        else:
+            if not (run_dir / 'output_v1.mp4').exists() or read(run_dir / 'validation_v1.json')['status'] != 'pass':
+                raise ValueError('Revision requires a published passing v1')
+            assets = read(run_dir / 'assets.json')
+            for a in assets['assets']:
+                if sha256_file(Path(assets['asset_root']) / a['relative_path']) != a['sha256']:
+                    raise ValueError('Source asset changed; frozen analysis invalid')
+            analyze(run_dir, assets, client, config)
+        req = requirements(run_dir, version, request, client)
+        loop_dir = run_dir / f'agent_v{version}'
+        retry_number = 0
+        while (loop_dir / 'checkpoint.json').exists():
+            retry_number += 1
+            loop_dir = run_dir / f'agent_v{version}_retry{retry_number}'
+        loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
+        logger.event('planning_attempt', path=str(loop_dir), prior_attempt_preserved=retry_number > 0)
+        loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
+        state = {'timeline': None, 'derived': None, 'pending': None, 'validation': None, 'render_attempts': 0}
+        def submit_timeline(**kw):
+            candidate = SubmitArgs.model_validate(kw).timeline
+            save(run_dir / f'candidate_v{version}_{time.time_ns()}.json', candidate)
+            t, derived = timeline.check(candidate, assets, req)
+            if state['pending']:
+                raise ValueError('Cannot change timeline after render; use fresh attempt/checkpoint')
+            state.update(timeline=t, derived=derived)
+            save(run_dir / f'timeline_v{version}.json', t.model_dump())
+            save(run_dir / f'derived_v{version}.json', derived)
+            return {'ok': True, 'derived': derived}
+        def inspect_interval(**kw):
+            x = InspectArgs.model_validate(kw)
+            a = next(a for a in assets['assets'] if a['asset_id'] == x.asset_id)
+            if a['kind'] != 'video' or x.end_ms > a['duration_ms'] or x.end_ms <= x.start_ms:
+                raise ValueError('Inspection range must be inside video source')
+            points = list(range(x.start_ms, x.end_ms, x.interval_ms)) + [x.end_ms-1]
+            observation = media.observe(a, assets, run_dir, config, loop.model, points=sorted(set(points)), prefix=f'inspect_{time.time_ns()}')
+            save(run_dir / f'inspection_v{version}_{time.time_ns()}.json', observation)
+            return observation
+        def render(**kw):
+            EmptyArgs.model_validate(kw)
+            if state['timeline'] is None:
+                raise ValueError('submit_timeline first')
+            if state['render_attempts'] >= 1 + config.repair_rounds:
+                raise ValueError('Render repair budget exhausted')
+            state['render_attempts'] += 1
+            logger.event('render_attempt', attempt=state['render_attempts'])
+            try:
+                state['pending'] = renderer.render(state['timeline'], state['derived'], assets, config, run_dir)
+                return {'ok': True, 'pending': state['pending'], 'attempt': state['render_attempts']}
+            except Exception as exc:
+                logger.event('render_failure', attempt=state['render_attempts'], error=str(exc))
+                raise
+        def verify(**kw):
+            EmptyArgs.model_validate(kw)
+            if not state['pending']:
+                raise ValueError('Render a candidate before verification')
+            report = movie_verify.verify(state['pending'], state['timeline'], state['derived'], assets, req, config, run_dir, loop.model)
+            state['validation'] = report
+            save(run_dir / f'validation_v{version}.json', report)
+            return {'ok': report['status'] == 'pass', 'status': report['status'], 'failed_checks': [c for c in report['checks'] if c['status'] != 'pass'], 'sampled_frames': report['sampled_frames']}
+        def finish(**kw):
+            EmptyArgs.model_validate(kw)
+            if state['timeline'] is None or not state['pending'] or not state['validation'] or state['validation']['status'] != 'pass':
+                raise ValueError('Cannot finish before valid timeline, actual render and passing movie verification')
+            timeline.check(state['timeline'].model_dump(), assets, req)
+            if output.exists():
+                raise ValueError('Already published output cannot be overwritten')
+            Path(state['pending']).replace(output)
+            logger.event('published', path=str(output), sha256=sha256_file(output))
+            return {'ok': True, 'accepted': True, 'output': str(output), 'validation': f'validation_v{version}.json'}
+        loop.handlers = {'submit_timeline': submit_timeline, 'inspect_interval': inspect_interval, 'render': render, 'verify': verify, 'finish': finish}
+        task = ('Plan, validate, render, verify, then finish version ' + str(version) + '. Frozen requirements: ' + json.dumps(req, ensure_ascii=False) + '\nAssets: ' + json.dumps(assets, ensure_ascii=False) + '\nObservations: ' + json.dumps(read(run_dir/'analysis.json'), ensure_ascii=False) + '\nVersion 1 example feasible math: 7000ms video + 3500ms image - 500ms dissolve = 10000ms. Version 2 can use image 3500ms then video 7000ms; choose actual content based on evidence. These durations are suggestions, NOT superseding request. For each clip provide all nullable fields; final transition cut 0. BGM from audio asset. All captions are provided copy, not ASR. Submit full JSON timeline with schema_version 1.0, version, parent_version, request_ids, asset_manifest_hash, constraint_set_id, output, clips, captions, bgm. Use tools; text-only answer does not finish.')
+        system = 'You are the video editing planner on gpt-6-sol/high. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
+        result = loop.run(task, system_prompt=system)
+        logger.event('planning_result', result=result)
+        top_usage = read(run_dir / 'usage.json')
+        child_usage = read(loop_dir / 'usage.json')
+        save(run_dir / 'usage.json', {'model': config.model, 'pricing': config.pricing, 'calls': top_usage['calls'] + child_usage['calls'], 'totals': {key: (sum((c.get(key) or 0) for c in top_usage['calls'] + child_usage['calls'] if c['status'] == 'succeeded') if key != 'estimated_cost_usd' else None) for key in ('input_tokens', 'cached_input_tokens', 'output_tokens', 'reasoning_tokens', 'estimated_cost_usd')}, 'cost_status': 'unknown'})
+        if not result['ok']:
+            raise RuntimeError(f'AgentLoop failed: {result}')
+        if version == 2:
+            one, two = read(run_dir/'timeline_v1.json'), read(run_dir/'timeline_v2.json')
+            save(run_dir/'revision_diff.json', {'parent_version': 1, 'version': 2, 'superseded': req['supersession_reasons'], 'preserved_hard_requirement_ids': [r['requirement_id'] for r in req['hard_constraints'] if r['requirement_id'].startswith('R1_')], 'clip_order_before': [c['kind'] for c in one['clips']], 'clip_order_after': [c['kind'] for c in two['clips']], 'captions_before': one['captions'], 'captions_after': two['captions']})
+        logger.event('finished', elapsed_s=time.monotonic()-started)
+        manifest(run_dir, assets)
+    except Exception as exc:
+        logger.event('pipeline_failed', error_type=type(exc).__name__, error=str(exc))
+        save(run_dir / f'failure_v{version}.json', {'status': 'failed', 'reason': str(exc), 'elapsed_s': time.monotonic()-started, 'checkpoint': f'agent_v{version}/checkpoint.json'})
+        raise
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest='command', required=True)
+    create = sub.add_parser('create')
+    create.add_argument('--assets', required=True)
+    revise = sub.add_parser('revise')
+    revise.add_argument('--base-revision', type=int, required=True)
+    for p in (create, revise):
+        p.add_argument('--run-dir', required=True)
+        p.add_argument('--request', required=True)
+        p.add_argument('--config', default='config.example.json')
+    args = parser.parse_args()
+    if args.command == 'revise' and args.base_revision != 1:
+        parser.error('Only revision 1 can be revised to version 2')
+    try:
+        run(1 if args.command == 'create' else 2, args)
+    except Exception as exc:
+        print(f'VIDEO_AGENT_FAILED: {type(exc).__name__}: {exc}', file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

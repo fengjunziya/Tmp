@@ -1,0 +1,87 @@
+--- a/media.py
++++ b/media.py
+@@ -0,0 +1,84 @@
++"""Immutable media inventory and sampled, explicitly limited visual evidence."""
++import base64
++import hashlib
++import json
++import subprocess
++from pathlib import Path
++from agent_core import sha256_file
++
++EXT = {'.mp4': 'video', '.mov': 'video', '.mkv': 'video', '.webm': 'video', '.avi': 'video', '.png': 'image', '.jpg': 'image', '.jpeg': 'image', '.webp': 'image', '.wav': 'audio', '.mp3': 'audio', '.m4a': 'audio', '.flac': 'audio'}
++
++
++def command(argv, timeout=180):
++    p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
++    if p.returncode:
++        raise RuntimeError(f'{argv[0]} exit {p.returncode}: {p.stderr[-3000:]}')
++    return p.stdout
++
++
++def probe(path, config):
++    return json.loads(command([config.ffprobe, '-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(path)]))
++
++
++def inventory(root, config):
++    root = Path(root).resolve()
++    assets = []
++    for p in sorted(root.rglob('*')):
++        if not p.is_file() or p.suffix.lower() not in EXT:
++            continue
++        info = probe(p, config)
++        streams = info.get('streams', [])
++        video = next((s for s in streams if s['codec_type'] == 'video'), None)
++        audio = next((s for s in streams if s['codec_type'] == 'audio'), None)
++        kind = EXT[p.suffix.lower()]
++        if kind == 'video' and not video:
++            raise ValueError(f'Video input has no video stream: {p}')
++        if kind == 'audio' and not audio:
++            raise ValueError(f'Audio input has no audio stream: {p}')
++        sha = sha256_file(p)
++        fps = video.get('avg_frame_rate', '0/0') if video else None
++        rel = p.relative_to(root).as_posix()
++        duration = info.get('format', {}).get('duration')
++        assets.append({'asset_id': hashlib.sha256((rel + ':' + sha).encode()).hexdigest()[:16], 'relative_path': rel,
++                       'sha256': sha, 'kind': kind, 'duration_ms': round(float(duration) * 1000) if duration and kind != 'image' else None,
++                       'width': video.get('width') if kind != 'audio' else None, 'height': video.get('height') if kind != 'audio' else None,
++                       'fps': fps if kind == 'video' else None, 'rotation': next((int(x.get('rotation', 0)) for x in video.get('side_data_list', []) if 'rotation' in x), 0) if video else 0,
++                       'has_audio': bool(audio), 'probe_summary': {'format_name': info.get('format', {}).get('format_name'), 'streams': [{k: s.get(k) for k in ('codec_type', 'codec_name', 'duration', 'sample_rate', 'channel_layout')} for s in streams]}})
++    if not assets:
++        raise ValueError('No media found')
++    manifest_hash = hashlib.sha256(json.dumps([(a['relative_path'], a['sha256']) for a in assets], sort_keys=True).encode()).hexdigest()
++    return {'asset_root': str(root), 'assets': assets, 'manifest_hash': manifest_hash}
++
++
++def frames(asset, root, run_dir, config, points, prefix):
++    p = Path(root) / asset['relative_path']
++    target = Path(run_dir) / 'frames'
++    target.mkdir(exist_ok=True)
++    results = []
++    for ms in points:
++        name = f"{prefix}_{asset['asset_id']}_{ms}.jpg"
++        dest = target / name
++        if not dest.exists():
++            argv = [config.ffmpeg, '-hide_banner', '-loglevel', 'error', '-threads', '1', '-y']
++            if asset['kind'] == 'video':
++                argv += ['-ss', f'{ms / 1000:.3f}']
++            argv += ['-i', str(p), '-frames:v', '1', '-vf', 'scale=640:-2', '-q:v', '3', str(dest)]
++            command(argv)
++        results.append({'time_ms': ms, 'path': str(dest.resolve()), 'sha256': sha256_file(dest)})
++    return results
++
++
++def observe(asset, inventory_data, run_dir, config, model, points=None, prefix='sample'):
++    if asset['kind'] == 'audio':
++        return {'asset_id': asset['asset_id'], 'summary': 'Audio only; probe metadata, no visual evidence or semantic transcription.', 'observed_intervals': [], 'candidate_shots': [], 'evidence_frames': [], 'uncertainties': ['Audio semantics not transcribed']}
++    if points is None:
++        duration = asset['duration_ms'] or 0
++        points = [0, 2500, 5000, 7500, max(0, duration - 200)] if asset['kind'] == 'video' else [0]
++        points = sorted(set(t for t in points if t < duration)) if asset['kind'] == 'video' else [0]
++    samples = frames(asset, inventory_data['asset_root'], run_dir, config, points, prefix)
++    content = [{'type': 'input_text', 'text': f"Describe only what is actually visible in these sampled frames of {asset['relative_path']}; each frame is a point observation, not proof of intervening scenes. Return a short factual description, possible shot choices, and uncertainty."}]
++    for frame in samples:
++        content += [{'type': 'input_text', 'text': f"Observed timestamp {frame['time_ms']} ms, evidence {frame['path']}"}, {'type': 'input_image', 'image_url': 'data:image/jpeg;base64,' + base64.b64encode(Path(frame['path']).read_bytes()).decode()}]
++    response = model.respond([{'role': 'user', 'content': content}], purpose='visual_asset_analysis')
++    summary = response.output_text.strip()
++    return {'asset_id': asset['asset_id'], 'summary': summary, 'observed_intervals': [{'start_ms': f['time_ms'], 'end_ms': f['time_ms'], 'description': 'Sampled point; see summary'} for f in samples], 'candidate_shots': [{'start_ms': 0, 'end_ms': min(asset['duration_ms'], 7000), 'status': 'candidate, intervening content unobserved'}] if asset['kind'] == 'video' else [{'status': 'static image'}], 'evidence_frames': samples, 'uncertainties': ['Content between sampled frames is not verified'] if asset['kind'] == 'video' else []}

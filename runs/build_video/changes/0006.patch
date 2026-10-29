@@ -1,0 +1,11 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -39,7 +39,7 @@
+     parent = read(run_dir / 'requirements_v1.json') if version == 2 else None
+     if version == 1:
+         prompt = ('Extract ALL formal constraints from the user request as JSON ONLY: {"hard_constraints":[{"field":"...","expected":...,"source_text":"verbatim substring from request"}],"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+-                  'Exactly one item for EACH field: ' + ', '.join(FIELDS) + '. Units ms, gain dB numeric, clip_order list ["video","image"] etc; codec expected libx264 for H.264, container mp4. ending_start_ms is derived from final two seconds, ending_end_ms from total. Video mute is false when keeping source audio. fit is pad. Never invent unknown requirements; list unsupported formally requested features. Source citation must occur verbatim in request.\nREQUEST:\n' + raw)
++                  'Exactly one item for EACH field: ' + ', '.join(FIELDS) + '. Units ms, gain dB numeric, clip_order list ["video","image"] etc; codec expected libx264 for H.264, container mp4. ending_start_ms is derived from final two seconds, ending_end_ms from total. Video mute is false when keeping source audio. fit is pad. The named demo assets, selecting a mathematically correct source interval, and adding the supplied BGM are IMPLEMENTED operational requirements, NOT unsupported. List only truly impossible formal features in unsupported_requirements; do not list normal production instructions there. Source citation must occur verbatim in request.\nREQUEST:\n' + raw)
+         parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_frozen_requirements').output_text)
+         rows = parsed['hard_constraints']
+         if len(rows) != len(FIELDS) or {r['field'] for r in rows} != set(FIELDS):

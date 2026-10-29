@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "version": 1,
+  "parent_version": null,
+  "request_ids": [
+    "request_v1_d30ddbdd2632"
+  ],
+  "asset_manifest_hash": "3cc725637e55f247a2384f2c5277a5a346103865175772ff47ca5a773f03e9f0",
+  "constraint_set_id": "d575b2c651ce56d735053da5ccd42a05b4dcbbc86f595b4a5ed44935f6c2b0da",
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "container": "mp4",
+    "video_codec": "libx264",
+    "audio_codec": "aac"
+  },
+  "clips": [
+    {
+      "clip_id": "intro_video",
+      "asset_id": "5cade409858635d0",
+      "kind": "video",
+      "in_ms": 0,
+      "out_ms": 7000,
+      "fit": "pad",
+      "mute": false,
+      "gain_db": -18,
+      "transition_out": {
+        "type": "dissolve",
+        "duration_ms": 500
+      }
+    },
+    {
+      "clip_id": "outro_still",
+      "asset_id": "6691b06721d38699",
+      "kind": "image",
+      "in_ms": 0,
+      "out_ms": 3500,
+      "fit": "pad",
+      "mute": null,
+      "gain_db": null,
+      "transition_out": {
+        "type": "cut",
+        "duration_ms": 0
+      }
+    }
+  ],
+  "captions": [
+    {
+      "caption_id": "opening_title",
+      "text": "十秒灵感",
+      "start_ms": 0,
+      "end_ms": 3000,
+      "style_id": "default"
+    },
+    {
+      "caption_id": "ending_credit",
+      "text": "由视频 Agent 自动剪辑",
+      "start_ms": 8000,
+      "end_ms": 10000,
+      "style_id": "default"
+    }
+  ],
+  "bgm": {
+    "asset_id": "ab9c1083346b42b1",
+    "in_ms": 0,
+    "start_ms": 0,
+    "gain_db": -20,
+    "fade_in_ms": 500,
+    "fade_out_ms": 500,
+    "loop": false
+  }
+}

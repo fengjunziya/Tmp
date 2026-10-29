@@ -1,0 +1,11 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -155,7 +155,7 @@
+         req = requirements(run_dir, version, request, client)
+         loop_dir = run_dir / f'agent_v{version}'
+         loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
+-        loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {})
++        loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
+         state = {'timeline': None, 'derived': None, 'pending': None, 'validation': None, 'render_attempts': 0}
+         def submit_timeline(**kw):
+             candidate = SubmitArgs.model_validate(kw).timeline

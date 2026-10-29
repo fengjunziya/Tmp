@@ -1,0 +1,88 @@
+{
+  "asset_id": "5cade409858635d0",
+  "summary": "- **Visible:** At 5.5–6.5 s, a brown card with a thin border reads “DEMO_02” in the upper left. At 6.75 and 6.999 s, a green card with the same layout reads “DEMO_03.” Each sample has a small, brightly colored rectangular inset below the title, with vertical color bands and a diagonal multicolored line.\n- **Possible shot choices:** Hold the full-card view, or crop closer to the inset to show its details.\n- **Uncertainty:** These samples do not establish when or how the card changed, whether the inset moved continuously, or what it depicts.",
+  "observed_intervals": [
+    {
+      "start_ms": 5500,
+      "end_ms": 5500,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 5750,
+      "end_ms": 5750,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6000,
+      "end_ms": 6000,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6250,
+      "end_ms": 6250,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6500,
+      "end_ms": 6500,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6750,
+      "end_ms": 6750,
+      "description": "Sampled point; see summary"
+    },
+    {
+      "start_ms": 6999,
+      "end_ms": 6999,
+      "description": "Sampled point; see summary"
+    }
+  ],
+  "candidate_shots": [
+    {
+      "start_ms": 0,
+      "end_ms": 7000,
+      "status": "candidate, intervening content unobserved"
+    }
+  ],
+  "evidence_frames": [
+    {
+      "time_ms": 5500,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_5500.jpg",
+      "sha256": "45cf8369758e051d3ac344372474abd495ad2c28a147e581d2492fe7de3c592d"
+    },
+    {
+      "time_ms": 5750,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_5750.jpg",
+      "sha256": "123e0b38e5134c1d15d7cd5b6d1729073ad6bd1739e55ffb86b6ef9365a04efb"
+    },
+    {
+      "time_ms": 6000,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_6000.jpg",
+      "sha256": "f5b3a0ae43b92dc378b568b12a8bab12e8c3780daed5a8958166dd4d32c9b5ae"
+    },
+    {
+      "time_ms": 6250,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_6250.jpg",
+      "sha256": "d2128390d3712fdfc855702be4a134d833125b851bff5e4f40bcf34132654f77"
+    },
+    {
+      "time_ms": 6500,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_6500.jpg",
+      "sha256": "190df021333a2c20a20f4dbaa55e60d7853269209570e127a69377f129e0ae64"
+    },
+    {
+      "time_ms": 6750,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_6750.jpg",
+      "sha256": "06619860205f91b35d6905cb10d6fab25e3231ccbe47f4c867b34f917335efa4"
+    },
+    {
+      "time_ms": 6999,
+      "path": "D:\\Tmp\\runs\\demo\\frames\\inspect_1793256312687797000_5cade409858635d0_6999.jpg",
+      "sha256": "f16fa3ed0239040b1a602cde4ed83ffdb8e2588950ef28fb13a1d23bdcabdeb3"
+    }
+  ],
+  "uncertainties": [
+    "Content between sampled frames is not verified"
+  ]
+}

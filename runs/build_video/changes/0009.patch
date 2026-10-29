@@ -1,0 +1,15 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -154,7 +154,12 @@
+             analyze(run_dir, assets, client, config)
+         req = requirements(run_dir, version, request, client)
+         loop_dir = run_dir / f'agent_v{version}'
++        retry_number = 0
++        while (loop_dir / 'checkpoint.json').exists():
++            retry_number += 1
++            loop_dir = run_dir / f'agent_v{version}_retry{retry_number}'
+         loop_logger = EventLogger(loop_dir, 'video_planning', req['request_id'], f'v{version}')
++        logger.event('planning_attempt', path=str(loop_dir), prior_attempt_preserved=retry_number > 0)
+         loop = AgentLoop(config, loop_logger, [spec('submit_timeline', {'timeline': {'type': 'object', 'additionalProperties': True}}, ['timeline']), spec('inspect_interval', {'asset_id': {'type': 'string'}, 'start_ms': {'type': 'integer'}, 'end_ms': {'type': 'integer'}, 'interval_ms': {'type': 'integer'}}, ['asset_id', 'start_ms', 'end_ms', 'interval_ms']), spec('render', {}), spec('verify', {}), spec('finish', {})], {'finish': lambda: {'ok': False}})
+         state = {'timeline': None, 'derived': None, 'pending': None, 'validation': None, 'render_attempts': 0}
+         def submit_timeline(**kw):

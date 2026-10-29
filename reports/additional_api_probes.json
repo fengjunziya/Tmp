@@ -1,0 +1,51 @@
+{
+  "calls": [
+    {
+      "purpose": "Read model catalog",
+      "status": "succeeded",
+      "usage": null,
+      "cost": null,
+      "note": "Metadata API; no generation usage reported."
+    },
+    {
+      "purpose": "Initial preflight malformed tiny image",
+      "status": "failed",
+      "http_status": 400,
+      "usage": null,
+      "cost": null,
+      "evidence": "reports/env_check_initial.json"
+    },
+    {
+      "purpose": "Connectivity text probe",
+      "status": "succeeded",
+      "model": "gpt-6-sol",
+      "reasoning_effort": "high",
+      "usage": {
+        "input_tokens": 9,
+        "cached_input_tokens": 0,
+        "output_tokens": 5,
+        "reasoning_tokens": 0
+      },
+      "request_id": null,
+      "cost": null,
+      "evidence": "Execution transcript, exact SDK usage captured."
+    },
+    {
+      "purpose": "Valid demo-image and function probe",
+      "status": "succeeded",
+      "model": "gpt-6-sol",
+      "reasoning_effort": "high",
+      "usage": {
+        "input_tokens": 1156,
+        "cached_input_tokens": 0,
+        "output_tokens": 54,
+        "reasoning_tokens": 0
+      },
+      "request_id": null,
+      "cost": null,
+      "evidence": "Execution transcript: observed DEMO_STILL, navy/teal/orange content."
+    }
+  ],
+  "cost_status": "unknown: prices unverified, failed-request billing unavailable",
+  "not_included": "Main chat and Codex collaboration/subagent service consumption is not exposed as metered API usage here."
+}

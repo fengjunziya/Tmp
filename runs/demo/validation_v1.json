@@ -1,0 +1,849 @@
+{
+  "version": 1,
+  "status": "pass",
+  "checks": [
+    {
+      "check_id": "nonempty",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": 394916,
+      "evidence": "D:\\Tmp\\runs\\demo\\output_v1.pending.mp4"
+    },
+    {
+      "check_id": "video_stream",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": {
+        "video": {
+          "index": 0,
+          "codec_name": "h264",
+          "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+          "profile": "High",
+          "codec_type": "video",
+          "codec_tag_string": "avc1",
+          "codec_tag": "0x31637661",
+          "mime_codec_string": "avc1.64001f",
+          "width": 1280,
+          "height": 720,
+          "coded_width": 1280,
+          "coded_height": 720,
+          "has_b_frames": 2,
+          "sample_aspect_ratio": "1:1",
+          "display_aspect_ratio": "16:9",
+          "pix_fmt": "yuv420p",
+          "level": 31,
+          "chroma_location": "left",
+          "field_order": "progressive",
+          "is_avc": "true",
+          "nal_length_size": "4",
+          "id": "0x1",
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "time_base": "1/15360",
+          "start_pts": 0,
+          "start_time": "0.000000",
+          "duration_ts": 153600,
+          "duration": "10.000000",
+          "bit_rate": "219054",
+          "bits_per_raw_sample": "8",
+          "nb_frames": "300",
+          "extradata_size": 45,
+          "disposition": {
+            "default": 1,
+            "dub": 0,
+            "original": 0,
+            "comment": 0,
+            "lyrics": 0,
+            "karaoke": 0,
+            "forced": 0,
+            "hearing_impaired": 0,
+            "visual_impaired": 0,
+            "clean_effects": 0,
+            "attached_pic": 0,
+            "timed_thumbnails": 0,
+            "non_diegetic": 0,
+            "captions": 0,
+            "descriptions": 0,
+            "metadata": 0,
+            "dependent": 0,
+            "still_image": 0,
+            "multilayer": 0
+          },
+          "tags": {
+            "language": "und",
+            "handler_name": "VideoHandler",
+            "encoder": "Lavc62.28.102 libx264"
+          }
+        },
+        "fps": 30.0
+      },
+      "evidence": "D:\\Tmp\\runs\\demo\\output_v1.pending.mp4"
+    },
+    {
+      "check_id": "video_duration_ms",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": {
+        "video_ms": 10000,
+        "container_ms": 10000,
+        "expected_ms": 10000
+      },
+      "evidence": "D:\\Tmp\\runs\\demo\\output_v1.pending.mp4"
+    },
+    {
+      "check_id": "audio_stream",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": {
+        "index": 1,
+        "codec_name": "aac",
+        "codec_long_name": "AAC (Advanced Audio Coding)",
+        "profile": "LC",
+        "codec_type": "audio",
+        "codec_tag_string": "mp4a",
+        "codec_tag": "0x6134706d",
+        "mime_codec_string": "mp4a.40.2",
+        "sample_fmt": "fltp",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "bits_per_sample": 0,
+        "initial_padding": 0,
+        "id": "0x2",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "time_base": "1/48000",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "duration_ts": 480000,
+        "duration": "10.000000",
+        "bit_rate": "86821",
+        "nb_frames": "470",
+        "extradata_size": 5,
+        "disposition": {
+          "default": 1,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0,
+          "non_diegetic": 0,
+          "captions": 0,
+          "descriptions": 0,
+          "metadata": 0,
+          "dependent": 0,
+          "still_image": 0,
+          "multilayer": 0
+        },
+        "tags": {
+          "language": "und",
+          "handler_name": "SoundHandler"
+        }
+      },
+      "evidence": "D:\\Tmp\\runs\\demo\\output_v1.pending.mp4"
+    },
+    {
+      "check_id": "full_decode",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": "ffmpeg returned exit 0",
+      "evidence": "commands/*decode*.result.json"
+    },
+    {
+      "check_id": "visual_title_visible",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": {
+        "title_visible": true,
+        "ending_visible": true,
+        "order_visible": true,
+        "uncertainty": true
+      },
+      "evidence": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+        },
+        {
+          "time_ms": 1000,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+        },
+        {
+          "time_ms": 3500,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+        },
+        {
+          "time_ms": 6850,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+        },
+        {
+          "time_ms": 7150,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+        },
+        {
+          "time_ms": 8250,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+        },
+        {
+          "time_ms": 9000,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+        },
+        {
+          "time_ms": 9850,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+        },
+        {
+          "time_ms": 9900,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+        }
+      ]
+    },
+    {
+      "check_id": "visual_ending_visible",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": {
+        "title_visible": true,
+        "ending_visible": true,
+        "order_visible": true,
+        "uncertainty": true
+      },
+      "evidence": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+        },
+        {
+          "time_ms": 1000,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+        },
+        {
+          "time_ms": 3500,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+        },
+        {
+          "time_ms": 6850,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+        },
+        {
+          "time_ms": 7150,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+        },
+        {
+          "time_ms": 8250,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+        },
+        {
+          "time_ms": 9000,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+        },
+        {
+          "time_ms": 9850,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+        },
+        {
+          "time_ms": 9900,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+        }
+      ]
+    },
+    {
+      "check_id": "visual_order_visible",
+      "requirement_id": null,
+      "status": "pass",
+      "actual": {
+        "title_visible": true,
+        "ending_visible": true,
+        "order_visible": true,
+        "uncertainty": true
+      },
+      "evidence": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+        },
+        {
+          "time_ms": 1000,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+        },
+        {
+          "time_ms": 3500,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+        },
+        {
+          "time_ms": 6850,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+        },
+        {
+          "time_ms": 7150,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+        },
+        {
+          "time_ms": 8250,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+        },
+        {
+          "time_ms": 9000,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+        },
+        {
+          "time_ms": 9850,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+        },
+        {
+          "time_ms": 9900,
+          "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+        }
+      ]
+    },
+    {
+      "check_id": "hard_R1_duration_ms",
+      "requirement_id": "R1_duration_ms",
+      "status": "pass",
+      "actual": {
+        "field": "duration_ms",
+        "expected": 10000
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_duration_ms",
+          "field": "duration_ms",
+          "actual": 10000,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_width",
+      "requirement_id": "R1_width",
+      "status": "pass",
+      "actual": {
+        "field": "width",
+        "expected": 1280
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_width",
+          "field": "width",
+          "actual": 1280,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_height",
+      "requirement_id": "R1_height",
+      "status": "pass",
+      "actual": {
+        "field": "height",
+        "expected": 720
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_height",
+          "field": "height",
+          "actual": 720,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_fps",
+      "requirement_id": "R1_fps",
+      "status": "pass",
+      "actual": {
+        "field": "fps",
+        "expected": 30
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_fps",
+          "field": "fps",
+          "actual": 30,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_container",
+      "requirement_id": "R1_container",
+      "status": "pass",
+      "actual": {
+        "field": "container",
+        "expected": "mp4"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_container",
+          "field": "container",
+          "actual": "mp4",
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_video_codec",
+      "requirement_id": "R1_video_codec",
+      "status": "pass",
+      "actual": {
+        "field": "video_codec",
+        "expected": "libx264"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_video_codec",
+          "field": "video_codec",
+          "actual": "libx264",
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_audio_codec",
+      "requirement_id": "R1_audio_codec",
+      "status": "pass",
+      "actual": {
+        "field": "audio_codec",
+        "expected": "aac"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_audio_codec",
+          "field": "audio_codec",
+          "actual": "aac",
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_clip_order",
+      "requirement_id": "R1_clip_order",
+      "status": "pass",
+      "actual": {
+        "field": "clip_order",
+        "expected": [
+          "video",
+          "image"
+        ]
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_clip_order",
+          "field": "clip_order",
+          "actual": [
+            "video",
+            "image"
+          ],
+          "status": "pass"
+        },
+        "movie_frames": [
+          {
+            "time_ms": 0,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+          },
+          {
+            "time_ms": 1000,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+          },
+          {
+            "time_ms": 3500,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+          },
+          {
+            "time_ms": 6850,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+          },
+          {
+            "time_ms": 7150,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+          },
+          {
+            "time_ms": 8250,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+          },
+          {
+            "time_ms": 9000,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+          },
+          {
+            "time_ms": 9850,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+          },
+          {
+            "time_ms": 9900,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+          }
+        ]
+      }
+    },
+    {
+      "check_id": "hard_R1_title_text",
+      "requirement_id": "R1_title_text",
+      "status": "pass",
+      "actual": {
+        "field": "title_text",
+        "expected": "十秒灵感"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_title_text",
+          "field": "title_text",
+          "actual": "十秒灵感",
+          "status": "pass"
+        },
+        "movie_frames": [
+          {
+            "time_ms": 0,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+          },
+          {
+            "time_ms": 1000,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+          },
+          {
+            "time_ms": 3500,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+          },
+          {
+            "time_ms": 6850,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+          },
+          {
+            "time_ms": 7150,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+          },
+          {
+            "time_ms": 8250,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+          },
+          {
+            "time_ms": 9000,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+          },
+          {
+            "time_ms": 9850,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+          },
+          {
+            "time_ms": 9900,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+          }
+        ]
+      }
+    },
+    {
+      "check_id": "hard_R1_title_start_ms",
+      "requirement_id": "R1_title_start_ms",
+      "status": "pass",
+      "actual": {
+        "field": "title_start_ms",
+        "expected": 0
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_title_start_ms",
+          "field": "title_start_ms",
+          "actual": 0,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_title_end_ms",
+      "requirement_id": "R1_title_end_ms",
+      "status": "pass",
+      "actual": {
+        "field": "title_end_ms",
+        "expected": 3000
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_title_end_ms",
+          "field": "title_end_ms",
+          "actual": 3000,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_ending_text",
+      "requirement_id": "R1_ending_text",
+      "status": "pass",
+      "actual": {
+        "field": "ending_text",
+        "expected": "由视频 Agent 自动剪辑"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_ending_text",
+          "field": "ending_text",
+          "actual": "由视频 Agent 自动剪辑",
+          "status": "pass"
+        },
+        "movie_frames": [
+          {
+            "time_ms": 0,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+          },
+          {
+            "time_ms": 1000,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+          },
+          {
+            "time_ms": 3500,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+          },
+          {
+            "time_ms": 6850,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+          },
+          {
+            "time_ms": 7150,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+          },
+          {
+            "time_ms": 8250,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+          },
+          {
+            "time_ms": 9000,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+          },
+          {
+            "time_ms": 9850,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+          },
+          {
+            "time_ms": 9900,
+            "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+          }
+        ]
+      }
+    },
+    {
+      "check_id": "hard_R1_ending_start_ms",
+      "requirement_id": "R1_ending_start_ms",
+      "status": "pass",
+      "actual": {
+        "field": "ending_start_ms",
+        "expected": 8000
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_ending_start_ms",
+          "field": "ending_start_ms",
+          "actual": 8000,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_ending_end_ms",
+      "requirement_id": "R1_ending_end_ms",
+      "status": "pass",
+      "actual": {
+        "field": "ending_end_ms",
+        "expected": 10000
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_ending_end_ms",
+          "field": "ending_end_ms",
+          "actual": 10000,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_transition_type",
+      "requirement_id": "R1_transition_type",
+      "status": "pass",
+      "actual": {
+        "field": "transition_type",
+        "expected": "cross_dissolve"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_transition_type",
+          "field": "transition_type",
+          "actual": "dissolve",
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_transition_ms",
+      "requirement_id": "R1_transition_ms",
+      "status": "pass",
+      "actual": {
+        "field": "transition_ms",
+        "expected": 500
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_transition_ms",
+          "field": "transition_ms",
+          "actual": 500,
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    },
+    {
+      "check_id": "hard_R1_video_gain_db",
+      "requirement_id": "R1_video_gain_db",
+      "status": "pass",
+      "actual": {
+        "field": "video_gain_db",
+        "expected": -18
+      },
+      "evidence": {
+        "validated_timeline": "timeline_v1.json",
+        "controlled_source_graph": "commands/*render*.argv.json",
+        "decoded_audio": true
+      }
+    },
+    {
+      "check_id": "hard_R1_video_mute",
+      "requirement_id": "R1_video_mute",
+      "status": "pass",
+      "actual": {
+        "field": "video_mute",
+        "expected": false
+      },
+      "evidence": {
+        "validated_timeline": "timeline_v1.json",
+        "controlled_source_graph": "commands/*render*.argv.json",
+        "decoded_audio": true
+      }
+    },
+    {
+      "check_id": "hard_R1_bgm_gain_db",
+      "requirement_id": "R1_bgm_gain_db",
+      "status": "pass",
+      "actual": {
+        "field": "bgm_gain_db",
+        "expected": -20
+      },
+      "evidence": {
+        "validated_timeline": "timeline_v1.json",
+        "controlled_source_graph": "commands/*render*.argv.json",
+        "decoded_audio": true
+      }
+    },
+    {
+      "check_id": "hard_R1_bgm_fade_in_ms",
+      "requirement_id": "R1_bgm_fade_in_ms",
+      "status": "pass",
+      "actual": {
+        "field": "bgm_fade_in_ms",
+        "expected": 500
+      },
+      "evidence": {
+        "validated_timeline": "timeline_v1.json",
+        "controlled_source_graph": "commands/*render*.argv.json",
+        "decoded_audio": true
+      }
+    },
+    {
+      "check_id": "hard_R1_bgm_fade_out_ms",
+      "requirement_id": "R1_bgm_fade_out_ms",
+      "status": "pass",
+      "actual": {
+        "field": "bgm_fade_out_ms",
+        "expected": 500
+      },
+      "evidence": {
+        "validated_timeline": "timeline_v1.json",
+        "controlled_source_graph": "commands/*render*.argv.json",
+        "decoded_audio": true
+      }
+    },
+    {
+      "check_id": "hard_R1_fit",
+      "requirement_id": "R1_fit",
+      "status": "pass",
+      "actual": {
+        "field": "fit",
+        "expected": "pad"
+      },
+      "evidence": {
+        "timeline_semantic_check": {
+          "requirement_id": "R1_fit",
+          "field": "fit",
+          "actual": [
+            "pad",
+            "pad"
+          ],
+          "status": "pass"
+        },
+        "movie_frames": []
+      }
+    }
+  ],
+  "probe": {
+    "video_duration_ms": 10000,
+    "container_duration_ms": 10000
+  },
+  "visual_review_raw": "{\"title_visible\":true,\"ending_visible\":true,\"order_visible\":true,\"uncertainty\":true}",
+  "sampled_frames": [
+    {
+      "time_ms": 0,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_0.jpg"
+    },
+    {
+      "time_ms": 1000,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_1000.jpg"
+    },
+    {
+      "time_ms": 3500,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_3500.jpg"
+    },
+    {
+      "time_ms": 6850,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_6850.jpg"
+    },
+    {
+      "time_ms": 7150,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_7150.jpg"
+    },
+    {
+      "time_ms": 8250,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_8250.jpg"
+    },
+    {
+      "time_ms": 9000,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9000.jpg"
+    },
+    {
+      "time_ms": 9850,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9850.jpg"
+    },
+    {
+      "time_ms": 9900,
+      "path": "D:\\Tmp\\runs\\demo\\verification_frames\\v1_9900.jpg"
+    }
+  ],
+  "limitations": [
+    "Sampled visual frames do not establish every intermediate frame",
+    "Gain is verified by controlled source graph and encoded audio presence, not isolated-source waveform separation"
+  ]
+}
