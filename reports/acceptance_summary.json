@@ -1,0 +1,84 @@
+{
+  "scope": "AC01-AC12 evidence mapping for the 2026-10-29 local 10-second demonstration",
+  "current_runtime": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "credential_env": "DEEPSEEK_API_KEY",
+    "video_run": "runs/deepseek_video"
+  },
+  "historical_run": "runs/demo (pre-migration OpenAI provenance; not relabeled)",
+  "criteria": [
+    {
+      "id": "AC01",
+      "status": "pass",
+      "evidence": ["runs/stage_a/result.json", "runs/stage_a/commands/0004.stdout.log", "reports/coding_smoke_acceptance.json", ".local/smoke_workspace/test_calculator.py"],
+      "basis": "The historical Coding Agent changed executable code and its independent smoke acceptance returned AC01_AC02_OK."
+    },
+    {
+      "id": "AC02",
+      "status": "pass",
+      "evidence": ["runs/stage_a/commands/0001.stderr.log", "runs/stage_a/events.jsonl", "runs/stage_a/commands/0004.stdout.log", "runs/stage_a/result.json"],
+      "basis": "The saved assertion failure, file-change events, and later successful acceptance show a real repair cycle."
+    },
+    {
+      "id": "AC03",
+      "status": "pass",
+      "evidence": ["reports/project_session.json", "runs/stage_a/result.json"],
+      "basis": "The stage-a-ready commit 289150c predates the video business source files; its tree was checked read-only."
+    },
+    {
+      "id": "AC04",
+      "status": "pass",
+      "evidence": ["runs/build_video/events.jsonl", "runs/build_video/result.json", "runs/deepseek_migration/events.jsonl", "runs/deepseek_alias_fix/events.jsonl"],
+      "basis": "Coding Agent tool calls and source-change events record historical video-module creation and later DeepSeek migration and repair, with provider history kept distinct."
+    },
+    {
+      "id": "AC05",
+      "status": "pass",
+      "evidence": ["runs/deepseek_video/assets.json", "runs/deepseek_video/analysis.json", "runs/deepseek_video/verification_frames", "materials/demo/manifest.json"],
+      "basis": "The new run inventories hashed media and records timed visual observations tied to actual source and movie frames."
+    },
+    {
+      "id": "AC06",
+      "status": "pass",
+      "evidence": ["runs/deepseek_video/requirements_v1.json", "runs/deepseek_video/timeline_v1.json", "runs/deepseek_video/output_v1.mp4", "runs/deepseek_video/validation_v1.json", "runs/deepseek_video/commands"],
+      "basis": "DeepSeek v1 was rendered, fully decoded, visually reviewed, and validated pass at a measured 10000 ms."
+    },
+    {
+      "id": "AC07",
+      "status": "pass",
+      "evidence": ["runs/deepseek_video/requirements_v2.json", "runs/deepseek_video/revision_diff.json", "runs/deepseek_video/timeline_v2.json", "runs/deepseek_video/output_v2.mp4", "runs/deepseek_video/validation_v2.json"],
+      "basis": "DeepSeek v2 changes only title text and clip order in the frozen requirements, preserves the other inherited constraints, and validates pass at 10000 ms."
+    },
+    {
+      "id": "AC08",
+      "status": "pass",
+      "evidence": ["runs/deepseek_video/agent_v1/events.jsonl", "runs/deepseek_video/agent_v1_retry1/events.jsonl", "runs/deepseek_alias_fix/events.jsonl", "reports/semantic_alias_acceptance.json", "runs/demo/commands"],
+      "basis": "The first DeepSeek plan received real constraint errors; a separately recorded Coding Agent alias fix enabled a successful fresh attempt. The earlier FFmpeg encoder fault was explicitly injected and recovered, not presented as spontaneous."
+    },
+    {
+      "id": "AC09",
+      "status": "pass",
+      "evidence": ["runs/deepseek_video/events.jsonl", "runs/deepseek_video/agent_v1_retry1/events.jsonl", "runs/deepseek_video/agent_v2/events.jsonl", "runs/deepseek_video/manifest.json", "runs/deepseek_video/assets.json"],
+      "basis": "Request and tool-call identifiers, command results, source hashes, and output hashes link the new run's stages and artifacts."
+    },
+    {
+      "id": "AC10",
+      "status": "pass",
+      "evidence": ["README.md", "requirements.txt", "config.example.json", "scripts/prepare_coding_demo.py", "video_agent.py", "coding_agent.py", "runs/deepseek_video/manifest.json"],
+      "basis": "Both CLIs, pinned Python dependencies, configuration, and reproducible commands are documented; README identifies the completed DeepSeek run and its independent --run-dir acceptance command."
+    },
+    {
+      "id": "AC11",
+      "status": "needs_review",
+      "evidence": ["runs/deepseek_video/usage.json", "runs/stage_a/usage.json", "runs/build_video/usage.json", "runs/demo/usage.json", "reports/project_usage.json", "reports/project_session.json"],
+      "basis": "Raw per-run usage exists, but provider prices and billing for failed or external calls are unverified; the aggregate report predates the new video run, so total cost cannot be independently recomputed."
+    },
+    {
+      "id": "AC12",
+      "status": "needs_review",
+      "evidence": ["reports/project_session.json", "reports/delivery_status.json", "docs/requirements.md"],
+      "basis": "The project records a local implementation interval and a one-page status, but the formal exam start, full timing scope, and U01-U06 criteria remain unconfirmed; no complete exam pass is claimed."
+    }
+  ]
+}

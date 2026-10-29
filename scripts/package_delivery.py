@@ -23,6 +23,7 @@ HISTORICAL_RUNS = {
     "build_video": "openai_historical",
     "final_hardening": "openai_historical",
     "deepseek_migration": "deepseek",
+    "deepseek_alias_fix": "deepseek",
     "credential_guard": "no_api_call_credential_check",
     "demo": "openai_historical",
 }
@@ -138,8 +139,8 @@ def secret_values() -> tuple[bytes, ...]:
 
 
 def hash_and_screen(path: Path, secrets: tuple[bytes, ...]) -> tuple[str, int]:
-    needles = (*secrets, b"-----BEGIN PRIVATE KEY-----")
-    overlap = max(map(len, needles)) - 1
+    overlap = max([512, *(len(value) for value in secrets)]) - 1
+    private_pem = re.compile(br"(?m)^-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----\r?\n[A-Za-z0-9+/=\r\n]{20,}")
     digest = hashlib.sha256()
     size = 0
     tail = b""
@@ -148,7 +149,7 @@ def hash_and_screen(path: Path, secrets: tuple[bytes, ...]) -> tuple[str, int]:
             digest.update(chunk)
             size += len(chunk)
             window = tail + chunk
-            if any(needle in window for needle in needles):
+            if any(secret in window for secret in secrets) or private_pem.search(window):
                 raise ValueError(f"Sensitive value found in: {safe_relative(path)}")
             tail = window[-overlap:] if overlap else b""
     return digest.hexdigest(), size
@@ -193,6 +194,7 @@ def main() -> None:
                                       ".gitignore", ".gitattributes")),
         *(ROOT / name for name in ("docs", "tasks", "tests", "scripts", "reports", "examples")),
         ROOT / "materials" / "demo",
+        ROOT / "output" / "pdf",
         run_dir,
     ]
     for name in HISTORICAL_RUNS:

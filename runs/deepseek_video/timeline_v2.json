@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "version": 2,
+  "parent_version": 1,
+  "request_ids": [
+    "request_v1_d30ddbdd2632",
+    "request_v2_e9bb9f0da9ed"
+  ],
+  "asset_manifest_hash": "3cc725637e55f247a2384f2c5277a5a346103865175772ff47ca5a773f03e9f0",
+  "constraint_set_id": "8e8984c937c5dc8917c7d8f0f6e7fe8683cffd962b76f6c8fe8ab05a3c60d73a",
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "container": "mp4",
+    "video_codec": "libx264",
+    "audio_codec": "aac"
+  },
+  "clips": [
+    {
+      "clip_id": "c1_image_open",
+      "asset_id": "6691b06721d38699",
+      "kind": "image",
+      "in_ms": null,
+      "out_ms": null,
+      "duration_ms": 3500,
+      "fit": "pad",
+      "mute": true,
+      "gain_db": 0.0,
+      "transition_out": {
+        "type": "dissolve",
+        "duration_ms": 500
+      }
+    },
+    {
+      "clip_id": "c2_video_main",
+      "asset_id": "5cade409858635d0",
+      "kind": "video",
+      "in_ms": 0,
+      "out_ms": 7000,
+      "duration_ms": null,
+      "fit": "pad",
+      "mute": false,
+      "gain_db": -18.0,
+      "transition_out": {
+        "type": "cut",
+        "duration_ms": 0
+      }
+    }
+  ],
+  "captions": [
+    {
+      "caption_id": "cap_title",
+      "start_ms": 0,
+      "end_ms": 3000,
+      "text": "让灵感再快一步",
+      "style_id": "default_zh"
+    },
+    {
+      "caption_id": "cap_ending",
+      "start_ms": 8000,
+      "end_ms": 10000,
+      "text": "由视频 Agent 自动剪辑",
+      "style_id": "default_zh"
+    }
+  ],
+  "bgm": {
+    "asset_id": "ab9c1083346b42b1",
+    "in_ms": 0,
+    "start_ms": 0,
+    "gain_db": -20.0,
+    "loop": false,
+    "fade_in_ms": 500,
+    "fade_out_ms": 500
+  }
+}

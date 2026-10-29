@@ -1,0 +1,11 @@
+[
+  "ffmpeg",
+  "-hide_banner",
+  "-v",
+  "error",
+  "-i",
+  "D:\\Tmp\\runs\\deepseek_video\\output_v2.pending.mp4",
+  "-f",
+  "null",
+  "-"
+]

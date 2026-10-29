@@ -1,0 +1,80 @@
+{
+  "parent_version": 1,
+  "version": 2,
+  "superseded": [
+    {
+      "requirement_id": "R1_title_text",
+      "field": "title_text",
+      "reason": "Explicitly replaces the opening Chinese title with this text.",
+      "source_text": "让灵感再快一步"
+    },
+    {
+      "requirement_id": "R1_clip_order",
+      "field": "clip_order",
+      "reason": "Explicitly changes order so the static image clip comes first and the dynamic video follows.",
+      "source_text": "把结尾静态图片镜头改到开头，动态视频放到后面"
+    }
+  ],
+  "preserved_hard_requirement_ids": [
+    "R1_duration_ms",
+    "R1_width",
+    "R1_height",
+    "R1_fps",
+    "R1_container",
+    "R1_video_codec",
+    "R1_audio_codec",
+    "R1_transition_type",
+    "R1_transition_ms",
+    "R1_title_start_ms",
+    "R1_title_end_ms",
+    "R1_ending_text",
+    "R1_ending_start_ms",
+    "R1_ending_end_ms",
+    "R1_video_mute",
+    "R1_video_gain_db",
+    "R1_bgm_gain_db",
+    "R1_bgm_fade_in_ms",
+    "R1_bgm_fade_out_ms",
+    "R1_fit"
+  ],
+  "clip_order_before": [
+    "video",
+    "image"
+  ],
+  "clip_order_after": [
+    "image",
+    "video"
+  ],
+  "captions_before": [
+    {
+      "caption_id": "cap_01_title",
+      "start_ms": 0,
+      "end_ms": 3000,
+      "text": "十秒灵感",
+      "style_id": "default_zh"
+    },
+    {
+      "caption_id": "cap_02_ending",
+      "start_ms": 8000,
+      "end_ms": 10000,
+      "text": "由视频 Agent 自动剪辑",
+      "style_id": "default_zh"
+    }
+  ],
+  "captions_after": [
+    {
+      "caption_id": "cap_title",
+      "start_ms": 0,
+      "end_ms": 3000,
+      "text": "让灵感再快一步",
+      "style_id": "default_zh"
+    },
+    {
+      "caption_id": "cap_ending",
+      "start_ms": 8000,
+      "end_ms": 10000,
+      "text": "由视频 Agent 自动剪辑",
+      "style_id": "default_zh"
+    }
+  ]
+}

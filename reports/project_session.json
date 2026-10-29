@@ -6,7 +6,7 @@
   "user_demo_authorization": "User explicitly allowed self-made 10 second demo material.",
   "model": "gpt-6-sol",
   "reasoning_effort": "high",
-  "stage": "provider_migration_complete",
+  "stage": "deepseek_two_revision_delivery",
   "user_time_budget_minutes": 120,
   "stage_a_verified_at": "2026-10-29T06:34:08.290544+00:00",
   "stage_a_result": "runs/stage_a/result.json",
@@ -19,5 +19,8 @@
   "stage_b_v1_commit": "f97521b",
   "stage_c_v2_commit": "dbd4be0",
   "provider_migration_completed_at": "2026-10-29T07:13:30.955603+00:00",
-  "migration_commit": "a037f43e537e2c7f719523c3c02d604f775df82f"
+  "migration_commit": "a037f43e537e2c7f719523c3c02d604f775df82f",
+  "deepseek_e2e_completed_at": "2026-10-29T07:35:00.705927+00:00",
+  "selected_run": "runs/deepseek_video",
+  "deepseek_first_video_commit": "ad05184"
 }

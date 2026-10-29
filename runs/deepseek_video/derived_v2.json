@@ -1,0 +1,159 @@
+{
+  "computed_duration_ms": 10000,
+  "clip_positions": [
+    {
+      "clip_id": "c1_image_open",
+      "start_ms": 0,
+      "end_ms": 3500
+    },
+    {
+      "clip_id": "c2_video_main",
+      "start_ms": 3000,
+      "end_ms": 10000
+    }
+  ],
+  "constraint_checks": [
+    {
+      "requirement_id": "R1_duration_ms",
+      "field": "duration_ms",
+      "actual": 10000,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_width",
+      "field": "width",
+      "actual": 1280,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_height",
+      "field": "height",
+      "actual": 720,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_fps",
+      "field": "fps",
+      "actual": 30,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_container",
+      "field": "container",
+      "actual": "mp4",
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_video_codec",
+      "field": "video_codec",
+      "actual": "libx264",
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_audio_codec",
+      "field": "audio_codec",
+      "actual": "aac",
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_transition_type",
+      "field": "transition_type",
+      "actual": "dissolve",
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_transition_ms",
+      "field": "transition_ms",
+      "actual": 500,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_title_start_ms",
+      "field": "title_start_ms",
+      "actual": 0,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_title_end_ms",
+      "field": "title_end_ms",
+      "actual": 3000,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_ending_text",
+      "field": "ending_text",
+      "actual": "由视频 Agent 自动剪辑",
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_ending_start_ms",
+      "field": "ending_start_ms",
+      "actual": 8000,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_ending_end_ms",
+      "field": "ending_end_ms",
+      "actual": 10000,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_video_mute",
+      "field": "video_mute",
+      "actual": [
+        false
+      ],
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_video_gain_db",
+      "field": "video_gain_db",
+      "actual": [
+        -18.0
+      ],
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_bgm_gain_db",
+      "field": "bgm_gain_db",
+      "actual": -20.0,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_bgm_fade_in_ms",
+      "field": "bgm_fade_in_ms",
+      "actual": 500,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_bgm_fade_out_ms",
+      "field": "bgm_fade_out_ms",
+      "actual": 500,
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R1_fit",
+      "field": "fit",
+      "actual": [
+        "pad",
+        "pad"
+      ],
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R2_title_text",
+      "field": "title_text",
+      "actual": "让灵感再快一步",
+      "status": "pass"
+    },
+    {
+      "requirement_id": "R2_clip_order",
+      "field": "clip_order",
+      "actual": [
+        "image",
+        "video"
+      ],
+      "status": "pass"
+    }
+  ]
+}
