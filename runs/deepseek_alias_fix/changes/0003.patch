@@ -1,0 +1,12 @@
+--- a/video_agent.py
++++ b/video_agent.py
+@@ -75,6 +75,9 @@
+     instruction = ('Return JSON ONLY. Supported constraint fields: ' + ', '.join(FIELDS) + '. '
+                    'Extract ONLY constraints explicitly requested in this text, never fill every field or invent captions/music. '
+                    'Use milliseconds, gain dB numbers, codec libx264 for H.264, mp4, AAC, clip_order list of video/image. '
++                   'Use ONLY these internal canonical enum values: transition_type must be dissolve, cut, or fade; fit must be pad or crop. '
++                   'Natural-language contain (letterbox padding) or crossfade (visual dissolve) must be emitted as the canonical pad or dissolve value, never as contain, cover, or crossfade. '
++                   'Already-frozen synonymous labels are accepted by the timeline semantic layer without rewriting old requirement files. '
+                    'For derived times explicitly requested as "last N seconds", use explicitly specified total duration if available; otherwise report needs_review rather than inventing a time. '
+                    'Every constraint needs an exact verbatim substring of THIS request as source_text; include all unsupported or ambiguous requirements in unsupported_requirements with original wording. '
+                    'Selecting source intervals, providing assets and mixing a supplied BGM are operational instructions supported by the renderer, not unsupported fields. '

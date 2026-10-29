@@ -1,0 +1,23 @@
+        if key == 'transition_type':
+            good = got == normalize_transition(expected)
+        elif key == 'fit':
+            if isinstance(expected, (list, tuple)):
+                normalized = normalize_fit(expected)
+                good = bool(got) and len(got) == len(normalized) and all(x == y for x, y in zip(got, normalized))
+            else:
+                normalized = normalize_fit(expected)
+                good = bool(got) and all(x == normalized for x in got)
+        elif key in ('video_gain_db', 'video_mute'):
+            good = bool(got) and all(x == expected for x in got)
+        elif key == 'clip_order':
+            good = got == expected
+        else:
+            good = got == expected
+        if not good:
+            failures.append({'requirement_id': req['requirement_id'], 'field': key, 'expected': expected, 'actual': got})
+    if failures:
+        raise ValueErr
+---VERIFY---
+        'audio_ok': audio_ms is not None and abs(audio_ms - expected_ms) <= tolerance
+                    and (audio_start_ms is None or abs(audio_start_ms) <= tolerance),
+        'container_ok': container_ms is not None and abs(container_ms - expected_ms) <= 

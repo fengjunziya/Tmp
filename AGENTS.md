@@ -6,6 +6,7 @@
 - Never use `OPENAI_API_KEY` for this project, and never fall back to another provider or credential. Missing DeepSeek credentials must cause an explicit error. Do not pass `OPENAI_*` environment variables into Coding Agent child processes.
 - Preserve historical logs and model attribution. Existing earlier OpenAI runs and demo videos must not be relabeled as DeepSeek executions. Use new run directories for post-migration runs.
 - The subagent model requirement below applies to Codex collaboration helpers; the two project runtime Agents follow this newer API policy. Subagent deletion remains prohibited.
+- The user has authorized the primary agent to fix small Video Agent errors directly to save time. Use normal Git and runtime logs; no separate attribution workflow is required for these fixes.
 
 ## Git workflow
 

@@ -1,0 +1,16 @@
+{
+  "commands": [
+    [
+      "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "scripts/check_semantic_aliases.py"
+    ],
+    [
+      "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "-m",
+      "py_compile",
+      "timeline.py",
+      "video_agent.py",
+      "verify.py"
+    ]
+  ]
+}

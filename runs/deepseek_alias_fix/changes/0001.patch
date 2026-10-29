@@ -1,0 +1,25 @@
+--- a/timeline.py
++++ b/timeline.py
+@@ -6,6 +6,22 @@
+ 
+ class Strict(BaseModel):
+     model_config = ConfigDict(extra='forbid')
++
++
++# Frozen requirement labels that are exact synonyms of internal wire values.
++# Unknown spellings are deliberately left untouched so real mismatches still fail.
++TRANSITION_ALIASES = {'crossfade': 'dissolve', 'cross_dissolve': 'dissolve'}
++FIT_ALIASES = {'contain': 'pad', 'cover': 'crop'}
++
++
++def normalize_transition(value):
++    return TRANSITION_ALIASES.get(value, value) if isinstance(value, str) else value
++
++
++def normalize_fit(value):
++    if isinstance(value, (list, tuple)):
++        return [FIT_ALIASES.get(x, x) if isinstance(x, str) else x for x in value]
++    return FIT_ALIASES.get(value, value) if isinstance(value, str) else value
+ 
+ 
+ class Output(Strict):

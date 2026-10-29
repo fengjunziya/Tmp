@@ -1,0 +1,90 @@
+es']
+                     if x['path'] == output.name), None)
+    if recorded is None or sha256_file(output) != recorded:
+        raise ValueError('Completed video differs from published manifest')
+
+
+def requirements(run_dir, version, raw, client):
+    path = run_dir / f'requirements_v{version}.json'
+    if path.exists():
+        previous = read(path)
+        if raw != previous['raw_text']:
+            raise ValueError('Frozen requirement baseline cannot be changed')
+        return previous
+    parent = read(run_dir / 'requirements_v1.json') if version == 2 else None
+    instruction = ('Return JSON ONLY. Supported constraint fields: ' + ', '.join(FIELDS) + '. '
+                   'Extract ONLY constraints explicitly requested in this text, never fill every field or invent captions/music. '
+                   'Use milliseconds, gain dB numbers, codec libx264 for H.264, mp4, AAC, clip_order list of video/image. '
+                   'For derived times explicitly requested as "last N seconds", use explicitly specified total duration if available; otherwise report needs_review rather than inventing a time. '
+                   'Every constraint needs an exact verbatim substring of THIS request as source_text; include all unsupported or ambiguous requirements in unsupported_requirements with original wording. '
+                   'Selecting source intervals, providing assets and mixing a supplied BGM are operational instructions supported by the renderer, not unsupported fields. '
+                   'If automatic dialogue transcription is requested, set dialogue_transcription_requested true. ')
+    if version == 1:
+        prompt = instruction + ('Format: {"hard_constraints":[{"field":"...","expected":...,"source_text":"..."}],'
+                                '"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+                                'Unrequested fields use declared output defaults during planning (not frozen hard requirements).\nREQUEST:\n' + raw)
+        parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_frozen_requirements').output_text)
+        rows = parsed['hard_constraints']
+        superseded = []
+        hard = [{'requirement_id': f'R1_{r["field"]}', 'field': r['field'], 'expected': r['expected'], 'source_text': r['source_text']} for r in rows]
+    else:
+        prompt = instruction + ('Format: {"changes":[{"field":"...","expected":...,"source_text":"...","reason":"why explicitly added or replaced"}],'
+                                '"soft_preferences":[],"dialogue_transcription_requested":false,"unsupported_requirements":[]}. '
+                                'Return only explicit new/different constraints; statements keeping old values are NOT changes. '
+                                'Any supported field may be added or replaced. Preserve all other baseline constraints.\nBASELINE:\n'
+                                + json.dumps(parent['hard_constraints'], ensure_ascii=False) + '\nNEW REQUEST:\n' + raw)
+        parsed = parse_response(client.respond([{'role': 'user', 'content': prompt}], purpose='extract_revision_changes').output_text)
+        changes = parsed['changes']
+        old_by_field = {r['field']: r for r in parent['hard_constraints']}
+        hard = [dict(r) for r in parent['hard_constraints'] if r['field'] not in {x['field'] for x in changes}]
+        superseded = []
+        for change in changes:
+            if not isinstance(change.get('reason'), str) or not change['reason'].strip():
+                raise ValueError('Each revision change requires a reason')
+            old = old_by_field.get(change['field'])
+            if old:
+                if old['expected'] == change['expected']:
+                    raise ValueError(f'Unchanged constraint is not a revision: {change["field"]}')
+                superseded.append({'requirement_id': old['requirement_id'], 'field': change['field'], 'reason': change['reason'], 'source_text': change['source_text']})
+            hard.append({'requirement_id': f'R2_{change["field"]}', 'field': change['field'], 'expected': change['expected'], 'source_text': change['source_text'], 'reason': change['reason']})
+    extracted = rows if version == 1 else changes
+    fields = [r['field'] for r in extracted]
+    if len(fields) != len(set(fields)) or any(f not in FIELDS for f in fields):
+        raise ValueError(f'Duplicate or unsupported constraint fields need review: {fields}')
+    for r in hard:
+        source = r['source_text']
+        if not isinstance(source, str) or not source or source not in (raw if r['requirement_id'].startswith('R2_') or version == 1 else parent['raw_text']):
+            raise ValueError(f'Citation missing from original request: {r["field"]} {source!r}')
+    if parsed.get('unsupported_requirements'):
+        raise ValueError('Formal unsupported requirements need review: ' + str(parsed['unsupported_requirements']))
+    if parsed.get('dialogue_transcription_requested'):
+        # ASR is not a language model. This demonstration has no dialogue/transcription request.
+        raise ValueError('Timed real ASR is required for dialogue/automatic captions; no configured timed ASR service')
+    result = {'version': version, 'request_id': f'request_v{version}_{hashlib.sha256(raw.encode()).hexdigest()[:12]}', 'raw_text': raw,
+              'parent_request_id': parent['request_id'] if parent else None, 'request_ids': (parent['request_ids'] if parent else []) + [f'request_v{version}_{hashlib.sha256(raw.encode()).hexdigest()[:12]}'],
+              'hard_constraints': hard, 'soft_preferences': parsed.get('soft_preferences', []), 'superseded_requirement_ids': [x['requirement_id'] for x in superseded],
+              'supersession_reasons': superseded, 'acceptance': {'status': 'frozen', 'automatic_fields': list(FIELDS), 'dialogue': 'none in synthetic demo', 'unsupported_requirements': []}}
+    result['constraint_set_id'] = hashlib.sha256(json.dumps(hard, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    save(path, result)
+    return result
+
+
+class InspectArgs(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    asset_id: str
+    start_ms: StrictInt = Field(ge=0)
+    end_ms: StrictInt = Field(gt=0)
+    interval_ms: StrictInt = Field(ge=100, le=5000)
+
+
+class SubmitArgs(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    timeline: dict
+
+
+class EmptyArgs(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+
+def spec(name, props, required=None):
+    return {'type': 'function', 'name': name, 'description': {'submit_timeline': 'Validate proposed timeline against strict schema, actual sources and frozen hard requirements. Returns real errors.', 'inspect_interval': 'Dense sample true video frames and ask vision model what is visible.', 'render': 'Render ONLY validated timeline and return actual FFmpeg errors.', 'verify': 'Probe and fully decode pending movie, then inspect actual movie frames via vision model.', 'finish': 'Publish only when every hard constraint and movie validation passes.'}[name], 'parameters': {'type': 'object', 'properties': props, 'required': required or [], 'additional

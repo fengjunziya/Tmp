@@ -261,7 +261,7 @@ class ModelClient:
     def _usage(self, response: Any) -> dict[str, Any]:
         usage = _field(response, "usage")
         if usage is None:
-            return {"input_tokens": None, "cached_input_tokens": None,
+            return {"raw_usage": None, "input_tokens": None, "cached_input_tokens": None,
                     "output_tokens": None, "reasoning_tokens": None, "estimated_cost_usd": None}
         input_tokens = _field(usage, "input_tokens")
         output_tokens = _field(usage, "output_tokens")
@@ -280,6 +280,7 @@ class ModelClient:
             cost = ((input_tokens - cached) * input_price + cached * cached_price
                     + output_tokens * output_price) / 1_000_000
         return {
+            "raw_usage": _jsonable(usage),
             "input_tokens": input_tokens,
             "cached_input_tokens": cached,
             "output_tokens": output_tokens,

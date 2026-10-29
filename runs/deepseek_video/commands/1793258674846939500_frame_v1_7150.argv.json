@@ -1,0 +1,16 @@
+[
+  "ffmpeg",
+  "-hide_banner",
+  "-loglevel",
+  "error",
+  "-y",
+  "-ss",
+  "7.150",
+  "-i",
+  "D:\\Tmp\\runs\\deepseek_video\\output_v1.pending.mp4",
+  "-frames:v",
+  "1",
+  "-q:v",
+  "3",
+  "D:\\Tmp\\runs\\deepseek_video\\verification_frames\\v1_7150.jpg"
+]

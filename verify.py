@@ -44,7 +44,7 @@ def media_duration_checks(info, expected_ms, fps):
         'expected_ms': expected_ms,
         'tolerance_ms': tolerance,
         'audio_ok': audio_ms is not None and abs(audio_ms - expected_ms) <= tolerance
-                    and (audio_start_ms is None or audio_start_ms <= tolerance),
+                    and (audio_start_ms is None or abs(audio_start_ms) <= tolerance),
         'container_ok': container_ms is not None and abs(container_ms - expected_ms) <= tolerance,
     }
 

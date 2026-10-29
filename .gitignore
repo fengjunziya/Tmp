@@ -32,3 +32,4 @@ runs/**/intermediates/
 runs/**/checkpoint.json
 runs/**/responses/
 materials/demo/*.png
+delivery/

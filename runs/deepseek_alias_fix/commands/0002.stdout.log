@@ -1,0 +1,4 @@
+502 container', 'video_codec', 'audio_codec', 'clip_order', 'title_text', 'title_start_ms', 'title_end_m
+658 transition_type', 'transition_ms', 'video_gain_db', 'video_mute', 'bgm_gain_db', 'bgm_fade_in_ms', '
+777 fit')   def read(path):     return json.loads(Path(path).read_text(encoding='utf-8'))   def save(pat
+19967 container=mp4, video_codec=libx264, audio_codec=aac; do not invent captions or BGM unless requested.

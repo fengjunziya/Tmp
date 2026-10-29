@@ -75,6 +75,9 @@ def requirements(run_dir, version, raw, client):
     instruction = ('Return JSON ONLY. Supported constraint fields: ' + ', '.join(FIELDS) + '. '
                    'Extract ONLY constraints explicitly requested in this text, never fill every field or invent captions/music. '
                    'Use milliseconds, gain dB numbers, codec libx264 for H.264, mp4, AAC, clip_order list of video/image. '
+                   'Use ONLY these internal canonical enum values: transition_type must be dissolve, cut, or fade; fit must be pad or crop. '
+                   'Natural-language contain (letterbox padding) or crossfade (visual dissolve) must be emitted as the canonical pad or dissolve value, never as contain, cover, or crossfade. '
+                   'Already-frozen synonymous labels are accepted by the timeline semantic layer without rewriting old requirement files. '
                    'For derived times explicitly requested as "last N seconds", use explicitly specified total duration if available; otherwise report needs_review rather than inventing a time. '
                    'Every constraint needs an exact verbatim substring of THIS request as source_text; include all unsupported or ambiguous requirements in unsupported_requirements with original wording. '
                    'Selecting source intervals, providing assets and mixing a supplied BGM are operational instructions supported by the renderer, not unsupported fields. '
@@ -179,6 +182,28 @@ def manifest(run_dir, inventory):
         if p.is_file() and p.name != 'manifest.json':
             files.append({'path': p.relative_to(run_dir).as_posix(), 'sha256': sha256_file(p), 'source_asset_manifest_hash': inventory['manifest_hash']})
     save(run_dir / 'manifest.json', {'files': files, 'source_files': [{'path': a['relative_path'], 'sha256': a['sha256']} for a in inventory['assets']], 'asset_manifest_hash': inventory['manifest_hash']})
+
+
+def aggregate_usage(run_dir, config):
+    paths = [run_dir / 'usage.json', *sorted(run_dir.glob('agent_v*/usage.json'))]
+    calls = {}
+    for path in paths:
+        if not path.exists():
+            continue
+        for call in read(path).get('calls', []):
+            identity = call.get('response_id') or call.get('request_id') or json.dumps(
+                {key: call.get(key) for key in ('timestamp', 'purpose', 'attempt', 'status', 'error_type')}, sort_keys=True)
+            calls[identity] = call
+    rows = list(calls.values())
+    totals = {key: sum(call.get(key) or 0 for call in rows) for key in
+              ('input_tokens', 'cached_input_tokens', 'output_tokens', 'reasoning_tokens')}
+    totals['estimated_cost_usd'] = (sum(call['estimated_cost_usd'] for call in rows)
+        if rows and all(call.get('estimated_cost_usd') is not None for call in rows) else None)
+    save(run_dir / 'usage.json', {'provider': 'deepseek', 'model': config.model,
+         'api_base': config.api_base, 'credential_env': config.api_key_env,
+         'pricing': config.pricing, 'calls': rows, 'totals': totals,
+         'incomplete_usage_calls': sum(call.get('input_tokens') is None for call in rows),
+         'cost_status': 'known_estimate' if totals['estimated_cost_usd'] is not None else 'unknown'})
 
 
 def run(version, args):
@@ -302,9 +327,7 @@ def run(version, args):
         system = f'You are the video editing planner on {config.model}/{config.reasoning_effort}. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
         result = loop.run(task, system_prompt=system)
         logger.event('planning_result', result=result)
-        top_usage = read(run_dir / 'usage.json')
-        child_usage = read(loop_dir / 'usage.json')
-        save(run_dir / 'usage.json', {'model': config.model, 'pricing': config.pricing, 'calls': top_usage['calls'] + child_usage['calls'], 'totals': {key: (sum((c.get(key) or 0) for c in top_usage['calls'] + child_usage['calls'] if c['status'] == 'succeeded') if key != 'estimated_cost_usd' else None) for key in ('input_tokens', 'cached_input_tokens', 'output_tokens', 'reasoning_tokens', 'estimated_cost_usd')}, 'cost_status': 'unknown'})
+        aggregate_usage(run_dir, config)
         if not result['ok']:
             raise RuntimeError(f'AgentLoop failed: {result}')
         if version == 2:

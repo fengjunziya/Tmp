@@ -1,0 +1,117 @@
+{
+  "assets": [
+    {
+      "asset_id": "ab9c1083346b42b1",
+      "summary": "Audio only; probe metadata, no visual evidence or semantic transcription.",
+      "observed_intervals": [],
+      "candidate_shots": [],
+      "evidence_frames": [],
+      "uncertainties": [
+        "Audio semantics not transcribed"
+      ],
+      "cache_key": "f776a02116a2e8b2d162ffbd6ee612176fd205711566e153cc47c65bf9037740"
+    },
+    {
+      "asset_id": "5cade409858635d0",
+      "summary": "**Factual Description**\nThe sampled frames display a static, digital-looking graphic with a thin, light grey rectangular border inset from the edges. \n*   **0 ms:** The background is a solid dark blue. Large white text in the upper left reads \"DEMO_01\". In the lower-left quadrant is a small color bar test pattern (red, green, yellow, blue, magenta, cyan vertical bars). Inside this pattern, there are diagonal colored lines and a small, illegible counter box in its top-left corner.\n*   **2500 ms:** The background remains dark blue, and the text is still \"DEMO_01\". The color bar pattern remains in the same position, but the diagonal lines and artifacts within it have changed shape and position.\n*   **5000 ms:** The background color changes to brown/olive, and the text changes to \"DEMO_02\". The color bar pattern is still present; the internal graphical artifacts and the numbers in the small counter box have changed.\n*   **7500 ms:** The background changes to a dark green, and the text reads \"DEMO_03\". The color bar pattern is present. A grey rectangular block now obscures part of the red, green, and yellow bars, and a diagonal line crosses the upper right portion of the pattern. The counter box shows different numbers.\n*   **9800 ms:** The background remains dark green with \"DEMO_03\". The grey block is no longer present. A diagonal colored line crosses the lower portion of the color bar pattern, and the counter box numbers have changed again.\n\n**Possible Shot Choices**\n*   **Static/Locked-off shot:** The framing, border, and position of all elements remain perfectly identical across all sampled frames.\n*   **Screen Capture / Digital Insert:** The crisp edges, solid colors, and perfect geometry suggest this is a direct digital screen recording or a rendered graphic, rather than a physical camera filming a monitor. \n\n**Uncertainty**\n*   **Intervening motion:** Because these are point observations, it is unknown if the background colors and text cut instantly or transition smoothly between these timestamps.\n*   **Counter details:** The exact numbers in the small dark box on the color bars are too small/blurry to read definitively.\n*   **Nature of the artifacts:** The diagonal lines and grey block appear to be digital glitches or overlay tracking, but their specific function or origin cannot be determined from the images alone. \n*   **Physicality:** While highly likely to be a digital capture, it cannot be entirely ruled out that this is a video of a physical screen.",
+      "observed_intervals": [
+        {
+          "start_ms": 0,
+          "end_ms": 0,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 2500,
+          "end_ms": 2500,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 5000,
+          "end_ms": 5000,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 7500,
+          "end_ms": 7500,
+          "description": "Sampled point; see summary"
+        },
+        {
+          "start_ms": 9800,
+          "end_ms": 9800,
+          "description": "Sampled point; see summary"
+        }
+      ],
+      "candidate_shots": [
+        {
+          "start_ms": 0,
+          "end_ms": 7000,
+          "status": "candidate, intervening content unobserved"
+        }
+      ],
+      "evidence_frames": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\deepseek_video\\frames\\sample_5cade409858635d0_0.jpg",
+          "sha256": "9acc4e48d3a507f23d132e227fa1c2fa12d76596222a78b59b7169323276ac49"
+        },
+        {
+          "time_ms": 2500,
+          "path": "D:\\Tmp\\runs\\deepseek_video\\frames\\sample_5cade409858635d0_2500.jpg",
+          "sha256": "441c46c6d0585e479f41ca6be810a4cbdeaab20da8930aa4bf1c0a4a6871e69b"
+        },
+        {
+          "time_ms": 5000,
+          "path": "D:\\Tmp\\runs\\deepseek_video\\frames\\sample_5cade409858635d0_5000.jpg",
+          "sha256": "0eba70b3b4107889186ff9d9cb2abca4a8a9c8edb3e8854888fe876bd985cd9d"
+        },
+        {
+          "time_ms": 7500,
+          "path": "D:\\Tmp\\runs\\deepseek_video\\frames\\sample_5cade409858635d0_7500.jpg",
+          "sha256": "e473468fff2e79d80eaf514d5532821e21af4707bf1e6a7239d11c7b59e8af85"
+        },
+        {
+          "time_ms": 9800,
+          "path": "D:\\Tmp\\runs\\deepseek_video\\frames\\sample_5cade409858635d0_9800.jpg",
+          "sha256": "d3237ee2e0c3979c14b36908bffcecf6d26b0f0809a0ad0204896df77fec054c"
+        }
+      ],
+      "uncertainties": [
+        "Content between sampled frames is not verified"
+      ],
+      "cache_key": "96b7b1acf287a51f012136092e3ecd1602d8edff0ee4f38a5464649f53c16d3f"
+    },
+    {
+      "asset_id": "6691b06721d38699",
+      "summary": "**Factual description**\n- Single frame at 0 ms shows a flat, graphic-style image.\n- Dark navy/blue background with a thin light-teal rectangular border inset near the frame edges.\n- White uppercase text “DEMO_STILL” in the upper-left inside the border.\n- A solid orange/brown rectangle in the left-middle/lower-left area.\n- No people, objects, camera movement, or other scene elements are visible.\n\n**Possible shot choices**\n- Static full-frame graphic/title card or slate.\n- Flat 2D UI/mockup-style insert.\n- If described cinematically: locked-off framing with left-aligned text and shape; no visible camera motion or depth cues.\n\n**Uncertainty**\n- Only one sampled timestamp is available, so duration, motion, editing, and off-screen context cannot be inferred.\n- “DEMO_STILL” suggests a still/demo graphic, but the frame alone does not prove the full clip’s nature.",
+      "observed_intervals": [
+        {
+          "start_ms": 0,
+          "end_ms": 0,
+          "description": "Sampled point; see summary"
+        }
+      ],
+      "candidate_shots": [
+        {
+          "status": "static image"
+        }
+      ],
+      "evidence_frames": [
+        {
+          "time_ms": 0,
+          "path": "D:\\Tmp\\runs\\deepseek_video\\frames\\sample_6691b06721d38699_0.jpg",
+          "sha256": "6843239560f47a293950825a194d423dfcbf269b0d44a6fd77169771ea5e89da"
+        }
+      ],
+      "uncertainties": [],
+      "cache_key": "cc63376810ced82246a0db1500b4f8360fc79ceb81170b9f7649ff925e63c4d4"
+    }
+  ],
+  "sampling": {
+    "interval_ms": 2500,
+    "frame_width": 640,
+    "endpoint_offset_ms": 200,
+    "cache_version": 2,
+    "description": "point samples across full video; unseen intervals unconfirmed"
+  },
+  "asset_manifest_hash": "3cc725637e55f247a2384f2c5277a5a346103865175772ff47ca5a773f03e9f0"
+}

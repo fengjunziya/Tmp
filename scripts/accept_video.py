@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 from pathlib import Path
 import subprocess
@@ -63,6 +64,9 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-dir", type=Path, default=RUN)
+    RUN = parser.parse_args().run_dir.resolve()
     try:
         main()
     except Exception as exc:

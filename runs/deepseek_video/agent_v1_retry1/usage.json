@@ -1,0 +1,203 @@
+{
+  "provider": "deepseek",
+  "api_base": "https://api.deepseek.com",
+  "credential_env": "DEEPSEEK_API_KEY",
+  "model": "deepseek-flash",
+  "pricing": {
+    "currency": "USD",
+    "verified_on": null,
+    "input_per_million": null,
+    "cached_input_per_million": null,
+    "output_per_million": null
+  },
+  "calls": [
+    {
+      "timestamp": "2026-10-29T07:24:22.034+00:00",
+      "purpose": "agent_turn",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 5.647,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "c0838865-1500-44c5-ad9e-461e5d0a1919",
+      "raw_usage": {
+        "input_tokens": 7133,
+        "input_tokens_details": {
+          "cached_tokens": 6912
+        },
+        "output_tokens": 907,
+        "output_tokens_details": {
+          "reasoning_tokens": 329
+        },
+        "total_tokens": 8040
+      },
+      "input_tokens": 7133,
+      "cached_input_tokens": 6912,
+      "output_tokens": 907,
+      "reasoning_tokens": 329,
+      "estimated_cost_usd": null
+    },
+    {
+      "timestamp": "2026-10-29T07:24:30.174+00:00",
+      "purpose": "agent_turn",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 8.126,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "f3302f67-ef0d-4c3b-bf15-f5f5c42daba2",
+      "raw_usage": {
+        "input_tokens": 8080,
+        "input_tokens_details": {
+          "cached_tokens": 7936
+        },
+        "output_tokens": 1350,
+        "output_tokens_details": {
+          "reasoning_tokens": 774
+        },
+        "total_tokens": 9430
+      },
+      "input_tokens": 8080,
+      "cached_input_tokens": 7936,
+      "output_tokens": 1350,
+      "reasoning_tokens": 774,
+      "estimated_cost_usd": null
+    },
+    {
+      "timestamp": "2026-10-29T07:24:31.584+00:00",
+      "purpose": "agent_turn",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 1.397,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "6a658b44-fb17-44ce-ae80-d84346716596",
+      "raw_usage": {
+        "input_tokens": 10260,
+        "input_tokens_details": {
+          "cached_tokens": 9344
+        },
+        "output_tokens": 46,
+        "output_tokens_details": {
+          "reasoning_tokens": 7
+        },
+        "total_tokens": 10306
+      },
+      "input_tokens": 10260,
+      "cached_input_tokens": 9344,
+      "output_tokens": 46,
+      "reasoning_tokens": 7,
+      "estimated_cost_usd": null
+    },
+    {
+      "timestamp": "2026-10-29T07:24:34.318+00:00",
+      "purpose": "agent_turn",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 1.694,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "e3a710a1-353e-4a2f-8a53-96fa3dd126e1",
+      "raw_usage": {
+        "input_tokens": 10353,
+        "input_tokens_details": {
+          "cached_tokens": 10112
+        },
+        "output_tokens": 21,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 10374
+      },
+      "input_tokens": 10353,
+      "cached_input_tokens": 10112,
+      "output_tokens": 21,
+      "reasoning_tokens": 0,
+      "estimated_cost_usd": null
+    },
+    {
+      "timestamp": "2026-10-29T07:24:41.258+00:00",
+      "purpose": "encoded_movie_visual_review",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 6.0,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "3920e8eb-d6df-46de-af11-4def711943b8",
+      "raw_usage": {
+        "input_tokens": 1964,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 634,
+        "output_tokens_details": {
+          "reasoning_tokens": 608
+        },
+        "total_tokens": 2598
+      },
+      "input_tokens": 1964,
+      "cached_input_tokens": 0,
+      "output_tokens": 634,
+      "reasoning_tokens": 608,
+      "estimated_cost_usd": null
+    },
+    {
+      "timestamp": "2026-10-29T07:24:42.527+00:00",
+      "purpose": "agent_turn",
+      "attempt": 1,
+      "status": "succeeded",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com",
+      "credential_env": "DEEPSEEK_API_KEY",
+      "model": "deepseek-flash",
+      "latency_s": 1.258,
+      "http_status": 200,
+      "request_id": null,
+      "response_id": "09b1ac5c-52e8-412a-859d-5596e2a8dedf",
+      "raw_usage": {
+        "input_tokens": 10742,
+        "input_tokens_details": {
+          "cached_tokens": 10368
+        },
+        "output_tokens": 31,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 10773
+      },
+      "input_tokens": 10742,
+      "cached_input_tokens": 10368,
+      "output_tokens": 31,
+      "reasoning_tokens": 0,
+      "estimated_cost_usd": null
+    }
+  ],
+  "totals": {
+    "input_tokens": 48532,
+    "cached_input_tokens": 44672,
+    "output_tokens": 2989,
+    "reasoning_tokens": 1718,
+    "estimated_cost_usd": null
+  },
+  "cost_status": "unknown"
+}

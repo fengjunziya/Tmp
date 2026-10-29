@@ -1,0 +1,7 @@
+只修复当前真实DeepSeek首版运行遇到的两个等价术语和一个音轨校验问题。用户禁止任何OPENAI_API_KEY调用；本程序已经固定deepseek-flash/DEEPSEEK_API_KEY。禁止删除、不能改验收、不能重新剪片或扩展功能、不能Git操作。只读必要源码后，用文件工具修改以下3个文件，完成即finish。
+
+1. timeline.check 中冻结需求 transition_type='crossfade' 对应内部真实视觉dissolve，fit='contain'对应pad、cover对应crop。现有cross_dissolve也对应dissolve。加入严格白名单的等价语义归一化后比较；不得把真正不同效果视为等价。必须逐项保留原requirement_id、原文和expected值，不能改写runs/deepseek_video的冻结需求或验收。对fit是每镜头列表比较时使用归一后的期望，仍要求全部相符。
+2. video_agent.requirements()提取指令明确要求内部规范值transition_type=dissolve/cut/fade、fit=pad/crop，并解释自然语言contain/crossfade只应使用上述规范值。对已冻结的同义值由timeline语义层兼容，不重写旧文件。
+3. verify.media_duration_checks 的音轨起点应 abs(audio_start_ms)<=tolerance，而不是仅 <=tolerance，避免start_time=-5000ms的10秒流被当作覆盖整片。维持任务书max(100ms,2000/fps)容差。
+
+独立验收 python scripts/check_semantic_aliases.py：在内存中使用实际冻结crossfade/contain需求检查同义正确时间线通过、真实cut错误失败、负向大音频偏移失败。不修改任何素材/视频/需求；不要再加其他测试或润色README。py_compile通过后直接调用finish。只需小改动，不重写完整文件。

@@ -8,6 +8,22 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
 
+# Frozen requirement labels that are exact synonyms of internal wire values.
+# Unknown spellings are deliberately left untouched so real mismatches still fail.
+TRANSITION_ALIASES = {'crossfade': 'dissolve', 'cross_dissolve': 'dissolve'}
+FIT_ALIASES = {'contain': 'pad', 'cover': 'crop'}
+
+
+def normalize_transition(value):
+    return TRANSITION_ALIASES.get(value, value) if isinstance(value, str) else value
+
+
+def normalize_fit(value):
+    if isinstance(value, (list, tuple)):
+        return [FIT_ALIASES.get(x, x) if isinstance(x, str) else x for x in value]
+    return FIT_ALIASES.get(value, value) if isinstance(value, str) else value
+
+
 class Output(Strict):
     width: StrictInt = Field(gt=0)
     height: StrictInt = Field(gt=0)
@@ -83,12 +99,14 @@ def check(data, inventory, requirements):
         if a is None or a['kind'] != c.kind:
             raise ValueError(f'{c.clip_id}: invalid video/image asset')
         if c.kind == 'video':
+            if c.duration_ms is not None:
+                raise ValueError(f'{c.clip_id}: video duration_ms must be null; its length is computed from out_ms - in_ms')
             if c.in_ms is None or c.out_ms is None or c.duration_ms is not None or c.in_ms < 0 or c.out_ms <= c.in_ms or c.out_ms > a['duration_ms']:
-                raise ValueError(f'{c.clip_id}: video source interval invalid')
+                raise ValueError(f'{c.clip_id}: require 0 <= in_ms < out_ms <= source duration {a["duration_ms"]}ms')
             length = c.out_ms - c.in_ms
         else:
             if c.in_ms is not None or c.out_ms is not None or c.duration_ms is None or c.duration_ms <= 0:
-                raise ValueError(f'{c.clip_id}: image duration/source invalid')
+                raise ValueError(f'{c.clip_id}: image in_ms and out_ms must be null; set a positive duration_ms')
             length = c.duration_ms
         tr = c.transition_out
         if (tr.type == 'cut' and tr.duration_ms != 0) or (tr.type != 'cut' and (tr.duration_ms <= 0 or tr.duration_ms >= length)):
@@ -123,10 +141,16 @@ def check(data, inventory, requirements):
     for req in requirements['hard_constraints']:
         key, expected = req['field'], req['expected']
         got = actual.get(key)
-        if key == 'transition_type' and expected == 'cross_dissolve':
-            # Requirements retain the natural-language semantic label; the wire schema calls this dissolve.
-            good = got == 'dissolve'
-        elif key in ('video_gain_db', 'video_mute', 'fit'):
+        if key == 'transition_type':
+            good = got == normalize_transition(expected)
+        elif key == 'fit':
+            if isinstance(expected, (list, tuple)):
+                normalized = normalize_fit(expected)
+                good = bool(got) and len(got) == len(normalized) and all(x == y for x, y in zip(got, normalized))
+            else:
+                normalized = normalize_fit(expected)
+                good = bool(got) and all(x == normalized for x in got)
+        elif key in ('video_gain_db', 'video_mute'):
             good = bool(got) and all(x == expected for x in got)
         elif key == 'clip_order':
             good = got == expected
