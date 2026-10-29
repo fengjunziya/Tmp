@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "D:\Tmp\.local\smoke_workspace\test_calculator.py", line 3, in <module>
+    assert add(2, 3) == 5, "add(2,3) must equal 5"
+           ^^^^^^^^^^^^^^
+AssertionError: add(2,3) must equal 5

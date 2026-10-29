@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "ok": true,
+  "turns": 6,
+  "finish": {
+    "ok": true,
+    "accepted": true,
+    "summary": "已保留首次测试的真实失败记录（add(2,3) 断言失败）；修复 calculator.py 的 add，并新增支持 --values 后一个或多个整数、输出 JSON 的 sum_cli.py。未修改测试文件或删除文件。修复后 test_calculator.py 通过（AC01_AC02_OK），负数参数也已验证。",
+    "checks": [
+      {
+        "ok": true,
+        "argv": [
+          "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+          "test_calculator.py"
+        ],
+        "cwd": "D:\\Tmp\\.local\\smoke_workspace",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 0.14,
+        "stdout": "AC01_AC02_OK\r\n",
+        "stderr": "",
+        "stdout_path": "D:\\Tmp\\runs\\stage_a\\commands\\0004.stdout.log",
+        "stderr_path": "D:\\Tmp\\runs\\stage_a\\commands\\0004.stderr.log"
+      }
+    ],
+    "changed_files": [
+      "calculator.py",
+      "sum_cli.py"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+--- a/D:\Tmp\.local\smoke_workspace\sum_cli.py
++++ b/D:\Tmp\.local\smoke_workspace\sum_cli.py
+@@ -0,0 +1,15 @@
++"""Sum integers provided on the command line."""
++
++import argparse
++import json
++
++
++def main():
++    parser = argparse.ArgumentParser(description="Sum integers.")
++    parser.add_argument("--values", type=int, nargs="+", required=True)
++    args = parser.parse_args()
++    print(json.dumps({"sum": sum(args.values)}))
++
++
++if __name__ == "__main__":
++    main()

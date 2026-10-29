@@ -16,3 +16,19 @@ __pycache__/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Local execution caches and large media (metadata stays versioned)
+.local/
+.pytest_cache/
+*.mp4
+*.mov
+*.mkv
+*.wav
+*.mp3
+*.flac
+runs/**/frames/
+runs/**/verification_frames/
+runs/**/intermediates/
+runs/**/checkpoint.json
+runs/**/responses/
+materials/demo/*.png

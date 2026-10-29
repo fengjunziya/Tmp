@@ -1,0 +1,23 @@
+{
+  "model": "gpt-6-sol",
+  "reasoning_effort": "high",
+  "api_key_env": "OPENAI_API_KEY",
+  "api_base": null,
+  "api_retries": 2,
+  "max_turns": 80,
+  "request_timeout_s": 180,
+  "command_timeout_s": 180,
+  "total_timeout_s": 3600,
+  "repair_rounds": 2,
+  "ffmpeg": "ffmpeg",
+  "ffprobe": "ffprobe",
+  "font_path": "C:/Windows/Fonts/msyh.ttc",
+  "output": {"width": 1280, "height": 720, "fps": 30},
+  "pricing": {
+    "currency": "USD",
+    "verified_on": null,
+    "input_per_million": null,
+    "cached_input_per_million": null,
+    "output_per_million": null
+  }
+}

@@ -1,0 +1,1 @@
+先运行 test_calculator.py，保留真实失败。阅读 calculator.py，修复 add 函数；另创建 sum_cli.py，接受 --values 后一个或多个整数并输出 JSON 对象 {"sum":求和结果}。不要修改 test_calculator.py，不要删除文件。运行测试并调用 finish 完成独立验收。所有变更和执行通过提供工具完成。

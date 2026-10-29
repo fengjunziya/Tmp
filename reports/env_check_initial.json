@@ -1,0 +1,68 @@
+{
+  "python": {
+    "available": true,
+    "path": "C:\\Users\\10501\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+    "version": "3.13.7"
+  },
+  "packages": {
+    "openai": {
+      "available": true,
+      "version": "2.44.0"
+    },
+    "pydantic": {
+      "available": true,
+      "version": "2.13.4"
+    }
+  },
+  "tools": {
+    "git": {
+      "available": true,
+      "path": "C:\\Program Files\\Git\\cmd\\git.EXE",
+      "version": "git version 2.53.0.windows.1"
+    },
+    "ffmpeg": {
+      "available": true,
+      "path": "C:\\Users\\10501\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.2-full_build\\bin\\ffmpeg.EXE",
+      "version": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+    },
+    "ffprobe": {
+      "available": true,
+      "path": "C:\\Users\\10501\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.2-full_build\\bin\\ffprobe.EXE",
+      "version": "ffprobe version 8.1.2-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers"
+    }
+  },
+  "ffmpeg_capabilities": {
+    "encoders": {
+      "libx264": true,
+      "aac": true
+    },
+    "filters": {
+      "subtitles": true,
+      "ass": true,
+      "xfade": true
+    }
+  },
+  "chinese_fonts": [
+    {
+      "path": "C:\\Windows\\Fonts\\msyh.ttc",
+      "usable": true
+    },
+    {
+      "path": "C:\\Windows\\Fonts\\simhei.ttf",
+      "usable": true
+    }
+  ],
+  "openai_api_key_present": true,
+  "model_check": {
+    "attempted": true,
+    "ok": false,
+    "model_requested": "gpt-6-sol",
+    "reasoning_effort_requested": "high",
+    "latency_ms": 5178,
+    "error_type": "BadRequestError",
+    "status_code": 400,
+    "cost_usd": null
+  },
+  "ready_local": true,
+  "ready_model": false
+}

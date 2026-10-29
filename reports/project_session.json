@@ -1,0 +1,14 @@
+{
+  "implementation_started_at": "2026-10-29T06:28:59.042622+00:00",
+  "timezone": "Asia/Shanghai",
+  "timing_scope": "Implementation from initial project code/config creation. Earlier document reading and model discovery not measured. Formal 180-minute exam clock and scope not confirmed.",
+  "formal_exam_180min_verified": false,
+  "user_demo_authorization": "User explicitly allowed self-made 10 second demo material.",
+  "model": "gpt-6-sol",
+  "reasoning_effort": "high",
+  "stage": "A",
+  "user_time_budget_minutes": 120,
+  "stage_a_verified_at": "2026-10-29T06:34:08.290544+00:00",
+  "stage_a_result": "runs/stage_a/result.json",
+  "phase_b_sources_exist": false
+}
