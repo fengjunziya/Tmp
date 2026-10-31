@@ -1,0 +1,10 @@
+这是一次 Coding Agent 录屏演示。请在当前工作目录的根目录创建 UTF-8 文本文件 coding_agent_demo.txt。
+
+文件内容必须恰好为以下三行，每行末尾使用一个换行符，第三行末尾也需要换行：
+Coding Agent demo
+Model: deepseek-flash
+Status: file created successfully
+
+先读取工作目录下的 AGENTS.md，然后直接调用 write_file 工具创建上述文件。不需要扫描项目、开发其他功能或运行额外测试。只允许修改 coding_agent_demo.txt，不修改或删除其他文件，不读取或输出任何密钥，也不执行 Git 操作。
+
+创建后调用 finish 工具，程序会自动检查目标文件及其准确内容。若已存在且内容完全一致，直接调用 finish 即可。完成后简要说明文件路径。

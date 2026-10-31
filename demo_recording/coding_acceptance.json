@@ -1,0 +1,9 @@
+{
+  "commands": [
+    [
+      "python",
+      "-c",
+      "from pathlib import Path; p = Path('coding_agent_demo.txt'); expected = chr(10).join(['Coding Agent demo', 'Model: deepseek-flash', 'Status: file created successfully', '']); assert p.is_file(), 'coding_agent_demo.txt was not created'; assert p.read_text(encoding='utf-8') == expected, 'Unexpected file contents'; print('CODING_DEMO_OK: ' + str(p.resolve()))"
+    ]
+  ]
+}
