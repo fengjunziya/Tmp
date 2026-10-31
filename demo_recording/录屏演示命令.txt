@@ -1,6 +1,6 @@
 录屏演示命令（在同一个 PowerShell 窗口中分段执行）
 
-当前只准备了提示词及命令，没有提前执行 Agent，也没有提前生成本次录屏的文本或视频。
+在录屏时执行下述命令，生成本次演示的文本、视频和运行日志。
 两个项目 Agent 均使用 deepseek-flash / high、DeepSeek 官方 Responses API，只读取 DEEPSEEK_API_KEY。
 录屏前确保当前 PowerShell 已设置 DEEPSEEK_API_KEY；不要在录屏中输入或展示真实密钥。项目不会自动加载 .env。
 本机 python 已有 openai / pydantic 依赖，FFmpeg、ffprobe 和现有演示素材均可直接使用。
@@ -12,14 +12,15 @@ $env:PYTHONUTF8 = '1'
 if ([string]::IsNullOrWhiteSpace($env:DEEPSEEK_API_KEY)) { throw 'Please set DEEPSEEK_API_KEY before recording.' }
 $demoRun = 'D:\Tmp\runs\recording_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff')
 
-二、Coding Agent：展示提示词，再让模型创建工作目录下的 .txt 文件
+二、Coding Agent：展示提示词，再让模型在本次录屏目录下创建 .txt 文件
 
 Get-Content -LiteralPath D:\Tmp\demo_recording\coding_prompt.txt -Encoding UTF8
-python coding_agent.py run --task demo_recording/coding_prompt.txt --workspace D:/Tmp --run-dir "$demoRun\coding" --config config.example.json --acceptance demo_recording/coding_acceptance.json --allow-write coding_agent_demo.txt --max-turns 8 --total-timeout-s 300
+python coding_agent.py run --task demo_recording/coding_prompt.txt --workspace "$demoRun" --run-dir "$demoRun\coding" --config config.example.json --acceptance demo_recording/coding_acceptance.json --allow-write coding_agent_demo.txt --max-turns 8 --total-timeout-s 300
 if ($LASTEXITCODE -ne 0) { throw 'Coding Agent failed; inspect its result and logs before continuing.' }
-Get-Content -LiteralPath D:\Tmp\coding_agent_demo.txt -Encoding UTF8
+Get-Content -LiteralPath "$demoRun\coding_agent_demo.txt" -Encoding UTF8
 
 预期：模型通过 write_file 创建文件，finish 返回通过，终端显示 CODING_DEMO_OK 和 ok: true。
+目标文件路径：$demoRun\coding_agent_demo.txt。例如 D:\Tmp\runs\recording_20261031_151829_457\coding_agent_demo.txt。
 提示词不会预先创建目标文件；配套 JSON 是 Coding Agent 必需的完成检查，仅检查该文件及内容。
 如果重复录制时文件已存在，可在录屏前手动将其另存为其他名称，让镜头再次展示新建过程。
 
