@@ -12,6 +12,17 @@ class Strict(BaseModel):
 # Unknown spellings are deliberately left untouched so real mismatches still fail.
 TRANSITION_ALIASES = {'crossfade': 'dissolve', 'cross_dissolve': 'dissolve'}
 FIT_ALIASES = {'contain': 'pad', 'cover': 'crop'}
+MEDIA_ALIASES = {
+    'container': {'mp4': 'mp4'},
+    'video_codec': {'h.264': 'libx264', 'h264': 'libx264', 'libx264': 'libx264'},
+    'audio_codec': {'aac': 'aac'},
+}
+
+
+def normalize_media_value(field, value):
+    if isinstance(value, str):
+        return MEDIA_ALIASES.get(field, {}).get(value.strip().casefold(), value)
+    return value
 
 
 def normalize_transition(value):
@@ -31,6 +42,11 @@ class Output(Strict):
     container: Literal['mp4']
     video_codec: Literal['libx264']
     audio_codec: Literal['aac']
+
+    @field_validator('container', 'video_codec', 'audio_codec', mode='before')
+    @classmethod
+    def canonical_media_value(cls, value, info):
+        return normalize_media_value(info.field_name, value)
 
 
 class Transition(Strict):
@@ -141,7 +157,9 @@ def check(data, inventory, requirements):
     for req in requirements['hard_constraints']:
         key, expected = req['field'], req['expected']
         got = actual.get(key)
-        if key == 'transition_type':
+        if key in MEDIA_ALIASES:
+            good = got == normalize_media_value(key, expected)
+        elif key == 'transition_type':
             good = got == normalize_transition(expected)
         elif key == 'fit':
             if isinstance(expected, (list, tuple)):

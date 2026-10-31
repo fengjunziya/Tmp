@@ -74,7 +74,7 @@ def requirements(run_dir, version, raw, client):
     parent = read(run_dir / 'requirements_v1.json') if version == 2 else None
     instruction = ('Return JSON ONLY. Supported constraint fields: ' + ', '.join(FIELDS) + '. '
                    'Extract ONLY constraints explicitly requested in this text, never fill every field or invent captions/music. '
-                   'Use milliseconds, gain dB numbers, codec libx264 for H.264, mp4, AAC, clip_order list of video/image. '
+                   'Use milliseconds, gain dB numbers, video_codec libx264 for H.264, container mp4, audio_codec aac (lowercase), clip_order list of video/image. '
                    'Use ONLY these internal canonical enum values: transition_type must be dissolve, cut, or fade; fit must be pad or crop. '
                    'Natural-language contain (letterbox padding) or crossfade (visual dissolve) must be emitted as the canonical pad or dissolve value, never as contain, cover, or crossfade. '
                    'Already-frozen synonymous labels are accepted by the timeline semantic layer without rewriting old requirement files. '
@@ -226,12 +226,15 @@ def run(version, args):
         ensure_provider_checkpoints(run_dir, config)
         client = ModelClient(config, logger)
         model_calls = [0]
+        model_call_limit = config.max_turns
         def bounded_model(model):
             original = model.respond
             def respond(*items, **options):
                 remaining = deadline - time.monotonic()
-                if remaining <= 0 or model_calls[0] >= config.max_turns:
-                    raise TimeoutError('Total video model-call/time budget exhausted')
+                if remaining <= 0:
+                    raise TimeoutError('Total video time budget exhausted')
+                if model_calls[0] >= model_call_limit:
+                    raise RuntimeError(f'Total video model-call budget exhausted ({model_call_limit} calls)')
                 model_calls[0] += 1
                 options['timeout'] = min(remaining, options.get('timeout', config.request_timeout_s))
                 return original(*items, **options)
@@ -323,7 +326,7 @@ def run(version, args):
             logger.event('published', path=str(output), sha256=sha256_file(output))
             return {'ok': True, 'accepted': True, 'output': str(output), 'validation': f'validation_v{version}.json'}
         loop.handlers = {'submit_timeline': submit_timeline, 'inspect_interval': inspect_interval, 'render': render, 'verify': verify, 'finish': finish}
-        task = ('Plan, validate, render, verify, then finish version ' + str(version) + '. Full timeline JSON Schema: ' + json.dumps(schema, ensure_ascii=False) + '. Unrequested output fields default to config.output=' + json.dumps(config.output) + ', container=mp4, video_codec=libx264, audio_codec=aac; do not invent captions or BGM unless requested. Frozen requirements: ' + json.dumps(req, ensure_ascii=False) + '\nAssets: ' + json.dumps(assets, ensure_ascii=False) + '\nObservations: ' + json.dumps(read(run_dir/'analysis.json'), ensure_ascii=False) + '\nVersion 1 example feasible math: 7000ms video + 3500ms image - 500ms dissolve = 10000ms. Version 2 can use image 3500ms then video 7000ms; choose actual content based on evidence. These durations are suggestions, NOT superseding request. For each clip provide all nullable fields; final transition cut 0. BGM from audio asset. All captions are provided copy, not ASR. Submit full JSON timeline with schema_version 1.0, version, parent_version, request_ids, asset_manifest_hash, constraint_set_id, output, clips, captions, bgm. Use tools; text-only answer does not finish.')
+        task = ('Plan, validate, render, verify, then finish version ' + str(version) + '. Full timeline JSON Schema: ' + json.dumps(schema, ensure_ascii=False) + '. Unrequested output fields default to config.output=' + json.dumps(config.output) + ', container=mp4, video_codec=libx264, audio_codec=aac; do not invent captions or BGM unless requested. Frozen requirements: ' + json.dumps(req, ensure_ascii=False) + '\nAssets: ' + json.dumps(assets, ensure_ascii=False) + '\nObservations: ' + json.dumps(read(run_dir/'analysis.json'), ensure_ascii=False) + '\nVersion 1 example feasible math: 7000ms video + 3500ms image - 500ms dissolve = 10000ms. Version 2 can use image 3500ms then video 7000ms; choose actual content based on evidence. These durations are suggestions, NOT superseding request. For video clips set duration_ms=null and choose in_ms/out_ms; for image clips set in_ms=out_ms=null and choose duration_ms. Use canonical output values mp4, libx264, aac; equivalent uppercase codec labels in frozen requirements are accepted without changing the baseline. For each clip provide all nullable fields; final transition cut 0. BGM from audio asset. All captions are provided copy, not ASR. Submit full JSON timeline with schema_version 1.0, version, parent_version, request_ids, asset_manifest_hash, constraint_set_id, output, clips, captions, bgm. Use tools; text-only answer does not finish.')
         system = f'You are the video editing planner on {config.model}/{config.reasoning_effort}. Use only observed evidence and frozen hard constraints. Do not invent visuals or bypass validation. Tools provide real errors for repair. Call submit_timeline, render, verify, finish, in order; inspect_interval when uncertain. Never claim pass on needs_review.'
         result = loop.run(task, system_prompt=system)
         logger.event('planning_result', result=result)
